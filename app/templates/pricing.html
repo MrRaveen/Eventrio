@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="py-16 px-4 max-w-7xl mx-auto flex-grow w-full">
+    <div class="text-center mb-12">
+        <h2 class="text-4xl font-extrabold text-white sm:text-5xl">Simple, transparent pricing</h2>
+        <p class="mt-4 text-xl text-gray-400">Select a plan to continue your setup. (Only Free tier accessible for MVP)</p>
+    </div>
+
+    <!-- API Limits Note -->
+    <div class="max-w-3xl mx-auto mb-10 p-4 bg-primary-900/40 border border-primary-500/30 rounded-xl text-center text-sm text-blue-200">
+        <p class="font-semibold mb-2">Note: Monthly limits apply based on API restrictions for:</p>
+        <div class="flex flex-wrap justify-center gap-2">
+            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Buffer</span>
+            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Cloudinary</span>
+            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Google Calendar</span>
+            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Notion</span>
+            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Google Meet</span>
+        </div>
+        <p class="mt-3 text-xs opacity-75">Counts reset every month. Only online events are supported.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- FREE TIER -->
+        <div class="bg-darkcard border border-primary-500 rounded-3xl p-8 shadow-2xl relative transform scale-105 z-10 transition-transform">
+            <div class="absolute top-0 right-0 bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-3xl uppercase tracking-wider">
+                Active MVP
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">Free</h3>
+            <p class="text-gray-400 mb-6 h-12">Ideal for testing and basic automation needs.</p>
+            <div class="mb-8">
+                <span class="text-5xl font-extrabold text-white">$0</span>
+                <span class="text-xl text-gray-500 font-medium">/mo</span>
+            </div>
+            <ul class="space-y-4 mb-8 text-gray-300">
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Org Count: 1</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Projects Count: 1</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Max Participants: 5</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Requests (Chat): 4</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Script Length: Low</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Slide Count: 4</li>
+            </ul>
+            <a href="{{ url_for('main.dashboard') }}" class="block w-full py-3 px-6 text-center rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold transition-colors duration-200">
+                Get Started
+            </a>
+        </div>
+
+        <!-- PRO TIER -->
+        <div class="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-8 opacity-75 backdrop-blur-sm">
+            <h3 class="text-2xl font-bold text-gray-300 mb-2">Pro</h3>
+            <p class="text-gray-500 mb-6 h-12">For growing organizations stepping up event quality.</p>
+            <div class="mb-8">
+                <span class="text-5xl font-extrabold text-white text-opacity-50">$$$</span>
+                <span class="text-xl text-gray-600 font-medium">/mo</span>
+            </div>
+            <ul class="space-y-4 mb-8 text-gray-400">
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Org Count: 20</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Projects Count: 200</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Max Participants: 300</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Requests (Chat): Unlimited</li>
+            </ul>
+            <button disabled class="w-full py-3 px-6 text-center rounded-xl bg-gray-700 text-gray-400 font-semibold cursor-not-allowed">
+                Not available in MVP
+            </button>
+        </div>
+
+        <!-- ULTIMATE TIER -->
+        <div class="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-8 opacity-75 backdrop-blur-sm">
+            <h3 class="text-2xl font-bold text-gray-300 mb-2">Ultimate</h3>
+            <p class="text-gray-500 mb-6 h-12">Uncapped potential for large scale enterprises.</p>
+            <div class="mb-8">
+                <span class="text-5xl font-extrabold text-white text-opacity-50">$$$</span>
+                <span class="text-xl text-gray-600 font-medium">/mo</span>
+            </div>
+            <ul class="space-y-4 mb-8 text-gray-400">
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Org Count: Unlimited</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Projects Count: Unlimited</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Max Participants: Unlimited</li>
+                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Requests (Chat): Unlimited</li>
+            </ul>
+            <button disabled class="w-full py-3 px-6 text-center rounded-xl bg-gray-700 text-gray-400 font-semibold cursor-not-allowed">
+                Not available in MVP
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

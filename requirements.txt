@@ -1,0 +1,21 @@
+# Web Server & Framework
+flask
+gunicorn
+
+# Database & Integration
+pymongo
+mongoengine
+certifi
+
+# Authentication & Utilities
+Authlib
+python-dotenv
+requests
+
+# Google ADK & MCP Integration
+google-adk
+toolbox-core
+mcp
+
+# Media Hosting
+cloudinary
