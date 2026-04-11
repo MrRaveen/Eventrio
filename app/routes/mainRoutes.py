@@ -1,8 +1,16 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from flask import (
+    Blueprint,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+
 from app.models.organizations import Organizations
 from app.models.projects import Projects
-from app.models.users import users
-from flask import session
+from app.models.userAcc import userAcc
 
 bp = Blueprint('main', __name__)
 
@@ -32,7 +40,7 @@ def dashboard():
     except Exception as e:
         orgs = []
         print(f"Failed to fetch orgs: {e}")
-        
+
     return render_template('dashboard.html', active_tab=tab, orgs=orgs)
 
 @bp.route('/api/org', methods=['POST'])
@@ -46,15 +54,15 @@ def create_org():
             userRole=[data.get('userRole', 'manager')]
         )
         new_org.save()
-        
+
         # Increment limit if needed
         user_id = session.get('user_id')
         if user_id:
-            user = users.objects(sub=user_id).first()
+            user = userAcc.objects(sub=user_id).first()
             if user:
                 user.limits.orgCount += 1
                 user.save()
-                
+
         return jsonify({"message": "Success", "id": str(new_org.id)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -77,21 +85,23 @@ def get_org_events(org_id):
 
 from urllib.parse import unquote
 
+
 @bp.route('/event/<string:event_id>')
 def event_dashboard(event_id):
     """Event specific workspace showing tools."""
     event = Projects.objects(id=event_id).first()
     if not event:
         return "Event not found", 404
-        
+
     script_text = ""
     if event.scriptLink and event.scriptLink.startswith("data:text/plain"):
         raw_encoded = event.scriptLink.split(",", 1)[-1]
         script_text = unquote(raw_encoded)
-        
+
     return render_template('event_dashboard.html', event=event, script_text=script_text)
 
 from app.agents.agent_manager import agent_manager
+
 
 @bp.route('/api/chat/planning', methods=['POST'])
 def chat_planning():
@@ -100,7 +110,7 @@ def chat_planning():
         return jsonify({"error": "Prompt required"}), 400
     if not agent_manager.planning_agent:
         return jsonify({"error": "Planning agent not initialized"}), 500
-    
+
     try:
         user_id = session.get('user_id', 'unknown_user')
         response = agent_manager.run_agent(agent_manager.planning_agent, prompt, user_id)
@@ -115,11 +125,11 @@ def chat_main():
         return jsonify({"error": "Prompt required"}), 400
     if not getattr(agent_manager, 'main_agent', None):
         return jsonify({"error": "Main agent not initialized"}), 500
-    
+
     user_id = session.get('user_id', 'unknown_user')
     # Injecting system instructions manually
     enriched_prompt = f"[System: User executing this is '{user_id}'. You can use this ID for owner_id in tools] User Request: {prompt}"
-    
+
     try:
         response = agent_manager.run_agent(agent_manager.main_agent, enriched_prompt, user_id)
         return jsonify({"response": response})
@@ -131,7 +141,7 @@ def trigger_media_agent():
     event_details = request.json.get('event_details')
     if not agent_manager.media_agent:
         return jsonify({"error": "Media agent not initialized"}), 500
-        
+
     try:
         prompt = f"Create media for the following event: {event_details}"
         user_id = session.get('user_id', 'unknown_user')
@@ -145,7 +155,7 @@ def trigger_social_agent():
     event_details = request.json.get('event_details')
     if not agent_manager.social_media_agent:
         return jsonify({"error": "Social media agent not initialized"}), 500
-        
+
     try:
         prompt = f"Create social media posts for: {event_details}. Also, ask if these should be posted now or saved for later."
         user_id = session.get('user_id', 'unknown_user')
@@ -159,7 +169,7 @@ def trigger_stream_agent():
     event_details = request.json.get('event_details')
     if not agent_manager.stream_handler_agent:
         return jsonify({"error": "Stream agent not initialized"}), 500
-        
+
     try:
         prompt = f"Initialize stream and notify participants for: {event_details}."
         user_id = session.get('user_id', 'unknown_user')

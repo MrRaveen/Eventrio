@@ -1,11 +1,13 @@
 import os
+
 from app.models.projects import Projects
-from app.models.users import users
+from app.models.userAcc import userAcc
+
 try:
     from google.adk.agents.llm_agent import Agent
-    from google.genai import types
     from google.adk.runners import Runner
     from google.adk.sessions.in_memory_session_service import InMemorySessionService
+    from google.genai import types
 except ImportError:
     Agent = None
     types = None
@@ -15,14 +17,14 @@ except ImportError:
 def create_event(name: str, description: str, org_id: str, owner_id: str, start_time: str = None, end_time: str = None) -> str:
     """Creates a new event (project) in the database and updates user limits."""
     # Lookup the user to verify limits
-    user = users.objects(sub=owner_id).first()
+    user = userAcc.objects(sub=owner_id).first()
     if not user:
         return f"Error: User not found with ID {owner_id}"
-    
+
     # For MVP, check projectsCount limit
     if user.limits.projectsCount >= 5 and user.payments.tier == 'free':
         return "Error: Free tier limit of 5 projects reached. Please upgrade to create more."
-        
+
     project = Projects(
         name=name,
         description=description,
@@ -34,50 +36,53 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
     if end_time:
         project.endDate = end_time
     project.save()
-    
+
     # Increment usage
     user.limits.projectsCount += 1
     user.save()
-    
+
     return f"Successfully created event '{name}' with ID: {str(project.id)}."
 
 from urllib.parse import quote
+
 
 def generate_media_for_event(event_id: str, script_context: str) -> str:
     """Creates real media assets and links them to an event."""
     project = Projects.objects(id=event_id).first()
     if not project:
         return f"Error: Event {event_id} not found."
-        
+
     # Generate a real image URL via Pollinations
     safe_prompt = quote(f"{project.name} {script_context[:100]} professional event cover art")
     image_url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1280&height=720&nologo=true"
-    
+
     # Generate a real functional viewable text file using Data URIs for the script
     safe_script = quote(script_context)
     script_url = f"data:text/plain;charset=utf-8,{safe_script}"
-    
+
     project.scriptLink = script_url
     project.mediaLinks = [image_url]
     project.save()
     return f"Media generated and linked to event {event_id} (Image & Script ready)."
 
-import requests
 import uuid
+
+import requests
+
 
 def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) -> str:
     """Creates a Google Doc directly on the user's account with the event plan."""
-    user = users.objects(sub=owner_id).first()
+    user = userAcc.objects(sub=owner_id).first()
     if not user or not user.oauthToken: return "Error: No Google Auth token found."
-    
+
     token = user.oauthToken.get('access_token')
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    
+
     # 1. Create empty document
     res = requests.post("https://docs.googleapis.com/v1/documents", headers=headers, json={"title": f"Event Plan: {event_id}"})
     if res.status_code != 200: return f"Error creating doc: {res.text}"
     doc_id = res.json().get('documentId')
-    
+
     # 2. Insert text
     insert_req = {
         "requests": [
@@ -90,45 +95,46 @@ def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) ->
         ]
     }
     res2 = requests.post(f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", headers=headers, json=insert_req)
-    
+
     doc_link = f"https://docs.google.com/document/d/{doc_id}/edit"
     return f"Successfully created your Google Doc: {doc_link}"
 
 def schedule_real_google_calendar(owner_id: str, event_name: str, start_time: str, end_time: str) -> str:
     """Schedule the event directly into the user's Google Calendar natively."""
-    user = users.objects(sub=owner_id).first()
+    user = userAcc.objects(sub=owner_id).first()
     if not user or not user.oauthToken: return "Error: No Google Auth token found."
-    
+
     token = user.oauthToken.get('access_token')
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-    
+
     payload = {
         "summary": event_name,
         "start": {"dateTime": start_time},
         "end": {"dateTime": end_time}
     }
-    
+
     res = requests.post("https://www.googleapis.com/calendar/v3/calendars/primary/events", headers=headers, json=payload)
     if res.status_code != 200: return f"Error scheduling calendar: {res.text}"
-    
+
     event_link = res.json().get('htmlLink')
     return f"Successfully scheduled Event in your calendar! Link: {event_link}"
 
 import json
 
+
 def save_tasks_to_db(owner_id: str, event_id: str, tasks_data_json: str) -> str:
     """Saves structured tasks to MongoDB. `tasks_data_json` MUST be a valid JSON array string containing dicts with 'title', 'start_date', 'due_date'."""
     project = Projects.objects(id=event_id).first()
     if not project: return "Error: Event not found."
-    
+
     try:
         tasks_data = json.loads(tasks_data_json)
     except Exception as e:
         return f"Error: Invalid JSON format for tasks_data_json. {e}"
-        
+
     if not isinstance(tasks_data, list):
         return "Error: tasks_data_json must be a JSON array."
-        
+
     new_tasks = []
     for item in tasks_data:
         if isinstance(item, str):
@@ -145,7 +151,7 @@ def save_tasks_to_db(owner_id: str, event_id: str, tasks_data_json: str) -> str:
                 "dueDate": item.get('due_date', ''),
                 "isCompleted": False
             })
-        
+
     project.tasks.extend(new_tasks)
     project.save()
     return f"Successfully saved {len(new_tasks)} tasks to MongoDB."
@@ -160,7 +166,7 @@ class EventAgentsManager:
             except ImportError:
                 McpToolset = None
                 StdioConnectionParams = None
-                
+
         if Agent is None:
             print("Google ADK missing. Agent functionality disabled.")
             self.planning_agent = None
@@ -169,7 +175,7 @@ class EventAgentsManager:
             self.stream_handler_agent = None
             self.main_agent = None
             return
-            
+
         try:
             mcp_toolset = None
             if McpToolset and StdioConnectionParams:
@@ -259,12 +265,12 @@ class EventAgentsManager:
             )
 
         content = types.Content(role="user", parts=[types.Part(text=prompt)])
-        
-        import time
+
         import asyncio
+        import time
         max_retries = 3
         delay = 2
-        
+
         async def _run_with_retry():
             current_delay = delay
             for attempt in range(max_retries):

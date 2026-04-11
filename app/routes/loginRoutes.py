@@ -1,8 +1,10 @@
-from flask import jsonify
 import os
-from flask import Flask,Blueprint, redirect, url_for, session, render_template
+
 from authlib.integrations.flask_client import OAuth
+from flask import Blueprint, Flask, jsonify, redirect, render_template, session, url_for
+
 from app.services.loginService import PerformLogin
+
 auth_login = Blueprint('auth_login', __name__)
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
@@ -35,13 +37,13 @@ def auth():
         user_info = token.get('userinfo')
         session['user'] = user_info
         status = PerformLogin(user_data=user_info, token_data=token)
-        # if status:
-        #     return redirect(url_for('main.dashboard'))
-        # else:
-        #     return redirect(url_for('main.pricing'))
-        return redirect(url_for('main.pricing'))
+        if status:
+            return redirect(url_for('main.dashboard'))
+        else:
+            return redirect(url_for('main.pricing'))
     except Exception as e:
-        return jsonify({"err":"error cooured","msg":str(e)})        
+        return jsonify({"err":"error cooured","msg":str(e)})
+         
 @auth_login.route('/logout')
 def logout():
     session.pop('user', None)

@@ -1,15 +1,17 @@
-from mongoengine import (
-    Document, 
-    EmbeddedDocument, 
-    StringField, 
-    BooleanField, 
-    DateTimeField, 
-    IntField, 
-    ListField,
-    EmbeddedDocumentField,
-    DictField
-)
 from datetime import datetime, timezone
+
+from mongoengine import (
+    BooleanField,
+    DateTimeField,
+    DictField,
+    Document,
+    EmbeddedDocument,
+    EmbeddedDocumentField,
+    IntField,
+    ListField,
+    StringField,
+)
+
 
 class PaymentInfo(EmbeddedDocument):
     tier = StringField(choices=('free', 'pro', 'ultimate'), default='free')
@@ -24,12 +26,12 @@ class Limits(EmbeddedDocument):
 
 class UserSpecificData(EmbeddedDocument):
     industry = ListField(StringField(choices=(
-        'IT', 'Health care', 'Sports', 'Business events', 
+        'IT', 'Health care', 'Sports', 'Business events',
         'Casual', 'Education (school)', 'Competitions'
     )))
     role = ListField(StringField(choices=(
-        'manager', 'student', 'business owner', 
-        'event planner', 'teacher', 'sport coach' # Note: corrected 'couch' to 'coach'
+        'manager', 'student', 'business owner',
+        'event planner', 'teacher', 'sport coach' 
     )))
     averageAttendeeCount = IntField(default=0)
     averageEventCountExcepected = IntField(default=0)
@@ -38,10 +40,8 @@ class UserSpecificData(EmbeddedDocument):
         'Lead generation', 'internal training', 'networking'
     )))
 
-class users(Document):
+class userAcc(Document):
     meta = {'collection': 'users'}
-
-    id = StringField(primary_key=True) 
     sub = StringField(required=True, unique=True)
     email = StringField(required=True, unique=True)
     emailVerified = BooleanField(default=False)
@@ -50,7 +50,10 @@ class users(Document):
     familyName = StringField()
     profilePicUrl = StringField()
     isOnline = BooleanField(default=False)
-    
+    accStatus = ListField(StringField(choices=(
+        'Active','D-activated','Pending-Payment'
+    )))
+
     payments = EmbeddedDocumentField(PaymentInfo, default=PaymentInfo)
     limits = EmbeddedDocumentField(Limits, default=Limits)
     userSpecificData = EmbeddedDocumentField(UserSpecificData, default=UserSpecificData)
