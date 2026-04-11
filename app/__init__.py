@@ -9,11 +9,13 @@ def create_app():
     app.config['SECRET_KEY'] = 'dev-secret-key'
     from app.db import init_db
     init_db()
-    from app.routes import mainRoutes
-    from app.routes.loginRoutes import auth_login, oauth
-    from app.routes.paymentRoutes import payment
+    from app.routes.ui.loginRoutes import auth_login, oauth
+    from app.routes.backend.paymentRoutes import payment
+    from app.routes.ui.UIEndpoints import ui_endpoints
+    from app.routes.backend.mainDashboard import main_dashboard
     oauth.init_app(app)
-    app.register_blueprint(mainRoutes.bp)
+    app.register_blueprint(ui_endpoints)
     app.register_blueprint(auth_login)
     app.register_blueprint(payment,url_prefix='/payment')
+    app.register_blueprint(main_dashboard,url_prefix='/main-dashboard')
     return app

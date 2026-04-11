@@ -20,7 +20,6 @@ google = oauth.register(
         'scope': 'openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.file'
     }
 )
-
 @auth_login.route('/login')
 def login():
     return render_template('login.html')
@@ -38,9 +37,9 @@ def auth():
         session['user'] = user_info
         status = PerformLogin(user_data=user_info, token_data=token)
         if status:
-            return redirect(url_for('main.dashboard'))
+            return redirect(url_for('ui_endpoints.dashboard'))
         else:
-            return redirect(url_for('main.pricing'))
+            return redirect(url_for('ui_endpoints.pricing'))
     except Exception as e:
         return jsonify({"err":"error cooured","msg":str(e)})
          

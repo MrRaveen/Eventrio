@@ -5,6 +5,7 @@ class Organizations(Document):
     
     orgName = StringField(required=True)
     address = StringField()
+    createdBy = StringField(required=True)
     industry = ListField(StringField(choices=(
         'IT', 'Health care', 'Sports', 'Business events', 
         'Casual', 'Education (school)', 'Competitions'

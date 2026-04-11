@@ -1,145 +1,189 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="py-16 px-4 max-w-7xl mx-auto flex-grow w-full">
-    <div class="text-center mb-12">
-        <h2 class="text-4xl font-extrabold text-white sm:text-5xl">Simple, transparent pricing</h2>
-        <p class="mt-4 text-xl text-gray-400">Select a plan to continue your setup. (Only Free tier accessible for MVP)
-        </p>
-    </div>
+<div
+    class="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 py-20 px-4 transition-colors duration-200">
+    <div class="max-w-6xl mx-auto">
 
-    <!-- API Limits Note -->
-    <div
-        class="max-w-3xl mx-auto mb-10 p-4 bg-primary-900/40 border border-primary-500/30 rounded-xl text-center text-sm text-blue-200">
-        <p class="font-semibold mb-2">Note: Monthly limits apply based on API restrictions for:</p>
-        <div class="flex flex-wrap justify-center gap-2">
-            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Buffer</span>
-            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Cloudinary</span>
-            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Google Calendar</span>
-            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Notion</span>
-            <span class="px-2 py-1 bg-darkcard rounded-md font-medium">Google Meet</span>
+        <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">Simple, Transparent
+                Pricing</h1>
+            <p class="text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto">Choose the perfect plan for your
+                event organization needs. No hidden fees, just pure automation.</p>
         </div>
-        <p class="mt-3 text-xs opacity-75">Counts reset every month. Only online events are supported.</p>
-    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-        <!-- FREE TIER -->
         <div
-            class="bg-darkcard border border-primary-500 rounded-3xl p-8 shadow-2xl relative transform scale-105 z-10 transition-transform">
+            class="max-w-3xl mx-auto mb-16 p-6 bg-white dark:bg-brand-900 border border-slate-200 dark:border-brand-700 rounded-xl shadow-sm">
+            <p class="font-bold text-slate-800 dark:text-white mb-4 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Monthly API Limits Apply
+            </p>
+            <div class="flex flex-wrap justify-center gap-3">
+                {% for service in ['Buffer', 'Cloudinary', 'Google Calendar', 'Notion', 'Google Meet'] %}
+                <span
+                    class="px-3 py-1 bg-slate-50 dark:bg-brand-800 border border-slate-100 dark:border-brand-700 rounded text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-tighter">{{
+                    service }}</span>
+                {% endfor %}
+            </div>
+            <p class="mt-4 text-xs text-slate-400 dark:text-slate-500 italic">Counts reset every month. MVP currently
+                supports online events only.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+
             <div
-                class="absolute top-0 right-0 bg-primary-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-3xl uppercase tracking-wider">
-                Active MVP
+                class="bg-white dark:bg-brand-900 border border-slate-200 dark:border-brand-700 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div
+                    class="absolute top-0 right-0 bg-brand-100 dark:bg-brand-800 text-brand-700 dark:text-brand-400 text-[10px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">
+                    Active MVP</div>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Free Plan</h3>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-4xl font-black text-slate-900 dark:text-white">$0</span>
+                        <span class="text-slate-500 dark:text-slate-400">/mo</span>
+                    </div>
+                </div>
+                <ul class="space-y-4 mb-8 flex-1">
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        1 Organization
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        1 Project Workspace
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Up to 5 Participants
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        4 AI Chat Requests
+                    </li>
+                </ul>
+                <a href="{{ url_for('main_dashboard.chat_main') }}"
+                    class="w-full py-3 px-6 text-center rounded-lg font-bold bg-brand-500 text-white hover:bg-brand-600 transition-all shadow-sm">Current
+                    Plan</a>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-2">Free</h3>
-            <p class="text-gray-400 mb-6 h-12">Ideal for testing and basic automation needs.</p>
-            <div class="mb-8">
-                <span class="text-5xl font-extrabold text-white">$0</span>
-                <span class="text-xl text-gray-500 font-medium">/mo</span>
+
+            <div
+                class="bg-white dark:bg-brand-900 border-2 border-brand-500 rounded-2xl p-8 flex flex-col shadow-xl relative transform scale-105 z-10 transition-transform">
+                <div
+                    class="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
+                    Upgrade Now</div>
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Pro Plan</h3>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-4xl font-black text-slate-900 dark:text-white">$20</span>
+                        <span class="text-slate-500 dark:text-slate-400">/mo</span>
+                    </div>
+                </div>
+                <ul class="space-y-4 mb-8 flex-1">
+                    <li class="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        20 Organizations
+                    </li>
+                    <li class="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        200 Projects
+                    </li>
+                    <li class="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        300 Participants
+                    </li>
+                    <li class="flex items-center gap-3 text-sm font-medium text-slate-700 dark:text-slate-200">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Unlimited AI Chat
+                    </li>
+                </ul>
+                <form action="{{ url_for('payment.create_checkout_session') }}" method="POST">
+                    <input type="hidden" name="planName" value="Pro Plan">
+                    <input type="hidden" name="planAmount" value="2000">
+                    <button type="submit"
+                        class="w-full py-3 px-6 rounded-lg font-bold bg-brand-500 text-white hover:bg-brand-600 shadow-md transition-all">Subscribe
+                        to Pro</button>
+                </form>
             </div>
-            <ul class="space-y-4 mb-8 text-gray-300">
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Org Count: 1</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Projects Count: 1</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Max Participants: 5</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Requests (Chat): 4</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Script Length: Low</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-green-400" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Slide Count: 4</li>
-            </ul>
-            <a href="{{ url_for('main.dashboard') }}"
-                class="block w-full py-3 px-6 text-center rounded-xl bg-primary-600 hover:bg-primary-500 text-white font-semibold transition-colors duration-200">
-                Get Started
+
+            <div
+                class="bg-white dark:bg-brand-900 border border-slate-200 dark:border-brand-700 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow">
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Ultimate Plan</h3>
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-4xl font-black text-slate-900 dark:text-white">$50</span>
+                        <span class="text-slate-500 dark:text-slate-400">/mo</span>
+                    </div>
+                </div>
+                <ul class="space-y-4 mb-8 flex-1">
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Unlimited Everything
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        White Label Support
+                    </li>
+                    <li class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                        <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
+                        </svg>
+                        Custom Automations
+                    </li>
+                </ul>
+                <form action="{{ url_for('payment.create_checkout_session') }}" method="POST">
+                    <input type="hidden" name="planName" value="Ultimate Plan">
+                    <input type="hidden" name="planAmount" value="5000">
+                    <button type="submit"
+                        class="w-full py-3 px-6 rounded-lg font-bold border-2 border-slate-200 dark:border-brand-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-brand-800 transition-colors">Subscribe
+                        to Ultimate</button>
+                </form>
+            </div>
+
+        </div>
+
+        <div class="text-center">
+            <a href="{{ url_for('main_dashboard.chat_main') }}"
+                class="inline-flex items-center gap-2 text-brand-600 dark:text-brand-400 font-bold hover:underline">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Return to Dashboard
             </a>
         </div>
-        <!-- pro -->
-        <div class="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-8 opacity-75 backdrop-blur-sm">
-            <h3 class="text-2xl font-bold text-gray-300 mb-2">Pro</h3>
-            <p class="text-gray-500 mb-6 h-12">For growing organizations stepping up event quality.</p>
-            <div class="mb-8">
-                <span class="text-5xl font-extrabold text-white">$20</span>
-                <span class="text-xl text-gray-600 font-medium">/mo</span>
-            </div>
-            <ul class="space-y-4 mb-8 text-gray-400">
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Org Count: 20</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Projects Count: 200</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Max Participants: 300</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Requests (Chat): Unlimited</li>
-            </ul>
-
-            <form action="/payment/create-checkout-session" method="POST">
-                <input type="hidden" name="planName" value="Pro Plan">
-                <input type="hidden" name="planAmount" value="2000">
-                <button type="submit"
-                    class="w-full py-3 px-6 text-center rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold transition-colors duration-200 cursor-pointer">
-                    Subscribe to Pro
-                </button>
-            </form>
-        </div>
-        <!-- Ultimate -->
-        <div class="bg-gray-800/40 border border-gray-700/50 rounded-3xl p-8 opacity-75 backdrop-blur-sm">
-            <h3 class="text-2xl font-bold text-gray-300 mb-2">Ultimate</h3>
-            <p class="text-gray-500 mb-6 h-12">Uncapped potential for large scale enterprises.</p>
-            <div class="mb-8">
-                <span class="text-5xl font-extrabold text-white">$50</span>
-                <span class="text-xl text-gray-600 font-medium">/mo</span>
-            </div>
-            <ul class="space-y-4 mb-8 text-gray-400">
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Org Count: Unlimited</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Projects Count: Unlimited</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Max Participants: Unlimited</li>
-                <li class="flex items-center gap-3"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor"
-                        viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                    </svg> Requests (Chat): Unlimited</li>
-            </ul>
-
-            <form action="/payment/create-checkout-session" method="POST">
-                <input type="hidden" name="planName" value="Ultimate Plan">
-                <input type="hidden" name="planAmount" value="5000">
-                <button type="submit"
-                    class="w-full py-3 px-6 text-center rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold transition-colors duration-200 cursor-pointer">
-                    Subscribe to Ultimate
-                </button>
-            </form>
-        </div>
-
     </div>
 </div>
 {% endblock %}

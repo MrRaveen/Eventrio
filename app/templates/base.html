@@ -15,30 +15,55 @@
                         sans: ['Inter', 'sans-serif'],
                     },
                     colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
+                        brand: {
+                            50: '#f3f0f9',
+                            100: '#e2dced',
+                            200: '#c8bfe0',
+                            500: '#9575cd',
+                            600: '#7e57c2',
+                            700: '#5e35b1',
+                            900: '#2d1b4d',
                         },
-                        darkbase: '#0b1121',
-                        darkcard: '#151e32'
+                        // Keep primary for compatibility but map to brand
+                        primary: {
+                            400: '#9575cd',
+                            500: '#7e57c2',
+                            600: '#5e35b1',
+                            900: '#2d1b4d',
+                        }
                     }
                 }
+            }
+        }
+
+        // Initialize theme
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
             }
         }
     </script>
     <style>
         body { font-family: 'Inter', sans-serif; }
+        /* Professional scrollbars */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-darkbase text-gray-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased transition-colors duration-200">
     <!-- Navbar or header could go here if needed -->
     {% block content %}
     {% endblock %}
