@@ -1,3 +1,9 @@
+from app.models.enum.toolStackEnum import toolStackEnum
+from app.models.enum.accStatusEnum import accStatusEnum
+from app.models.enum.planOptionsEnum import planOptionsEnum
+from app.models.enum.ObjectiveEnum import ObjectiveEnum
+from app.models.enum.RoleEnum import RoleEnum
+from app.models.enum.IndustryEnum import IndustryEnum
 from datetime import datetime, timezone
 
 from mongoengine import (
@@ -14,7 +20,7 @@ from mongoengine import (
 
 
 class PaymentInfo(EmbeddedDocument):
-    tier = StringField(choices=('free', 'pro', 'ultimate'), default='free')
+    tier = StringField(choices=[e.value for e in planOptionsEnum], default=planOptionsEnum.FREE)
     joinedDate = DateTimeField(default=lambda: datetime.now(timezone.utc))
     lastRenewedDate = DateTimeField()
     nextReniewDate = DateTimeField()
@@ -25,20 +31,12 @@ class Limits(EmbeddedDocument):
     chatReqCount = IntField(default=0)
 
 class UserSpecificData(EmbeddedDocument):
-    industry = ListField(StringField(choices=(
-        'IT', 'Health care', 'Sports', 'Business events',
-        'Casual', 'Education (school)', 'Competitions'
-    )))
-    role = ListField(StringField(choices=(
-        'manager', 'student', 'business owner',
-        'event planner', 'teacher', 'sport coach' 
-    )))
+    industry = ListField(StringField(choices=[e.value for e in IndustryEnum]))
+    role = ListField(StringField(choices=[e.value for e in RoleEnum]))
     averageAttendeeCount = IntField(default=0)
     averageEventCountExcepected = IntField(default=0)
-    toolStack = ListField(StringField())
-    mainObjectiveOfUser = ListField(StringField(choices=(
-        'Lead generation', 'internal training', 'networking'
-    )))
+    toolStack = ListField(StringField(choices=[e.value for e in toolStackEnum]))
+    mainObjectiveOfUser = ListField(StringField(choices=[e.value for e in ObjectiveEnum]))
 
 class userAcc(Document):
     meta = {'collection': 'users'}
@@ -50,10 +48,7 @@ class userAcc(Document):
     familyName = StringField()
     profilePicUrl = StringField()
     isOnline = BooleanField(default=False)
-    accStatus = ListField(StringField(choices=(
-        'Active','D-activated','Pending-Payment'
-    )))
-
+    accStatus = ListField(StringField(choices=[e.value for e in accStatusEnum]))
     payments = EmbeddedDocumentField(PaymentInfo, default=PaymentInfo)
     limits = EmbeddedDocumentField(Limits, default=Limits)
     userSpecificData = EmbeddedDocumentField(UserSpecificData, default=UserSpecificData)

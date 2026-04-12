@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex h-screen w-full bg-white overflow-hidden text-slate-900 transition-colors duration-200">
+
+    <!-- Sidebar -->
+    <aside
+        class="w-64 bg-slate-50 border-r border-slate-200 flex flex-col hidden md:flex flex-shrink-0 transition-colors duration-200">
+        <div class="h-16 flex items-center px-6 border-b border-slate-200">
+            <span class="text-xl font-bold text-brand-700">Eventrio</span>
+        </div>
+        <nav class="flex-1 px-4 py-6 space-y-1">
+            <a href="{{ url_for('ui_endpoints.dashboard', tab='orgs') }}"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                    </path>
+                </svg>
+                Organizations
+            </a>
+            <a href="{{ url_for('ui_endpoints.ai_planner') }}"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 bg-brand-50 text-brand-700 font-medium">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0012 18.75c-1.03 0-1.9-.4-2.593-1.003l-.548-.547z">
+                    </path>
+                </svg>
+                AI Planner
+            </a>
+            <a href="{{ url_for('ui_endpoints.dashboard', tab='settings') }}"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Settings
+            </a>
+            <a href="{{ url_for('ui_endpoints.dashboard', tab='profile') }}"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Profile
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Chat Workspace -->
+    <main class="flex-1 flex flex-col bg-slate-100/50 relative overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-slate-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur shrink-0 z-10">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-bold text-slate-900">AI Planner</h1>
+                <div class="h-6 w-px bg-slate-200 mx-2"></div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Organization</span>
+                    <select id="chatOrgSelect"
+                        class="bg-white border border-slate-200 text-sm text-slate-700 rounded-md px-3 py-1.5 focus:ring-2 focus:ring-brand-500 outline-none transition-all cursor-pointer shadow-sm hover:border-slate-300">
+                        <option value="">No Organization selected</option>
+                        {% for org in orgs %}
+                        <option value="{{ org.id }}">{{ org.orgName }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    AI Online
+                </span>
+                <a href="{{ url_for('ui_endpoints.dashboard') }}" 
+                   class="p-2 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-md transition-all" title="Back to Dashboard">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                    </svg>
+                </a>
+            </div>
+        </header>
+
+        <!-- Chat Window -->
+        <div class="flex-1 overflow-y-auto p-6 md:p-10 space-y-6 flex flex-col scroll-smooth" id="globalChatWindow">
+            <div class="max-w-4xl mx-auto w-full space-y-6">
+                <!-- Welcome Message -->
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 text-slate-700 shadow-sm border border-slate-100/50 flex-1 relative">
+                        <h4 class="font-bold text-slate-900 mb-2 text-lg">Hello! I'm your AI Event Planner.</h4>
+                        <p class="leading-relaxed">I can help you orchestrate entire events from start to finish. Tell me what you're thinking of planning today!</p>
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button onclick="quickPrompt('Help me plan a product launch for Acme Corp')" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg border border-slate-200 transition-all">Product Launch</button>
+                            <button onclick="quickPrompt('I want to host a webinar on Python basics')" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg border border-slate-200 transition-all">Technical Webinar</button>
+                            <button onclick="quickPrompt('Create a social media campaign for our upcoming gala')" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-semibold rounded-lg border border-slate-200 transition-all">Social Campaign</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-6 md:px-10 md:pb-10 shrink-0">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 p-2 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
+                    <div class="flex items-end gap-2 px-2 py-1">
+                        <textarea id="globalChatInput" 
+                                  placeholder="Type your message here... (Shift+Enter for new line)"
+                                  class="flex-1 bg-transparent border-none outline-none resize-none py-3 text-slate-900 placeholder-slate-400 text-base max-h-40 min-h-[50px] overflow-y-auto"
+                                  rows="1"
+                                  onkeydown="handleKey(event)"></textarea>
+                        <button onclick="sendGlobalChat()" 
+                                class="w-12 h-12 bg-brand-500 hover:bg-brand-600 text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-brand-500/30 shrink-0 mb-1 active:scale-95">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <p class="text-[10px] text-center text-slate-400 mt-3 font-medium uppercase tracking-widest">Powered by Eventrio AI Engine</p>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    function handleKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendGlobalChat();
+        }
+    }
+
+    function quickPrompt(text) {
+        document.getElementById('globalChatInput').value = text;
+        sendGlobalChat();
+    }
+
+    function sendGlobalChat() {
+        const input = document.getElementById('globalChatInput');
+        const orgSelect = document.getElementById('chatOrgSelect');
+        const text = input.value.trim();
+        if (!text) return;
+
+        let contextPayload = text;
+        if (orgSelect && orgSelect.value) {
+            contextPayload = `[Context: The user has selected Organization '${orgSelect.options[orgSelect.selectedIndex].text}' with ID '${orgSelect.value}']. ` + text;
+        }
+
+        const chatWindow = document.getElementById('globalChatWindow');
+        
+        // Use a container for centering and max-width
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'max-w-4xl mx-auto w-full flex flex-col items-end';
+        messageContainer.innerHTML = `
+            <div class="bg-brand-500 text-white p-4 rounded-2xl rounded-tr-none shadow-md max-w-[85%] border border-brand-600">
+                ${text.replace(/\n/g, '<br>')}
+            </div>
+        `;
+        chatWindow.appendChild(messageContainer);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+        input.value = '';
+        input.style.height = 'auto';
+
+        // Add loading indicator
+        const loadingContainer = document.createElement('div');
+        loadingContainer.className = 'max-w-4xl mx-auto w-full flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2';
+        loadingContainer.id = 'ai-loading';
+        loadingContainer.innerHTML = `
+            <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
+                <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+            </div>
+            <div class="bg-white rounded-2xl p-4 text-slate-700 shadow-sm border border-slate-100/50">
+                <div class="flex gap-1 items-center h-6">
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 animate-bounce"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 animate-bounce [animation-delay:0.2s]"></span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300 animate-bounce [animation-delay:0.4s]"></span>
+                </div>
+            </div>
+        `;
+        chatWindow.appendChild(loadingContainer);
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+
+        fetch('/main-dashboard/plan-event/main', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: contextPayload })
+        })
+            .then(res => res.json())
+            .then(data => {
+                loadingContainer.remove();
+                let reply = data.error ? "Error: " + data.error : data.response;
+                if (typeof reply === 'object') reply = JSON.stringify(reply);
+                
+                const aiResponse = document.createElement('div');
+                aiResponse.className = 'max-w-4xl mx-auto w-full flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2';
+                aiResponse.innerHTML = `
+                    <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 text-slate-700 shadow-sm border border-slate-100/50 flex-1 relative prose prose-slate prose-sm max-w-none">
+                        ${reply.replace(/\n/g, '<br>')}
+                    </div>
+                `;
+                chatWindow.appendChild(aiResponse);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            })
+            .catch(err => {
+                loadingContainer.remove();
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'max-w-4xl mx-auto w-full flex justify-center';
+                errorDiv.innerHTML = `<div class="bg-red-50 text-red-600 px-4 py-2 rounded-lg border border-red-100 text-sm">Connection failed. Please check your internet.</div>`;
+                chatWindow.appendChild(errorDiv);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            });
+    }
+
+    // Auto-resize textarea
+    const textarea = document.getElementById('globalChatInput');
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,79 @@
+<!-- Reusable Confirmation Modal -->
+<div id="confirmModal"
+    class="fixed inset-0 z-[100] hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-xl w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-200"
+        id="confirmModalContent">
+        <div class="p-6 border-b border-slate-200 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-slate-900" id="confirmModalTitle">Are you sure?</h3>
+            <button onclick="closeConfirmModal()"
+                class="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-100 transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <p class="text-slate-600" id="confirmModalMessage">This action cannot be undone.</p>
+        </div>
+        <div class="p-6 border-t border-slate-100 flex gap-3 justify-end bg-slate-50/50 rounded-b-xl">
+            <button onclick="closeConfirmModal()"
+                class="px-4 py-2 border border-slate-200 rounded-md text-slate-600 hover:bg-slate-100 font-medium transition-all">
+                Cancel
+            </button>
+            <button id="confirmModalActionBtn"
+                class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md font-semibold transition-all shadow-sm">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let onConfirmCallback = null;
+
+    function openConfirmModal(title, message, confirmBtnText, onConfirm, type = 'danger') {
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalMessage').innerText = message;
+        
+        const actionBtn = document.getElementById('confirmModalActionBtn');
+        actionBtn.innerText = confirmBtnText;
+        
+        // Reset classes
+        actionBtn.className = 'px-4 py-2 text-white rounded-md font-semibold transition-all shadow-sm ';
+        if (type === 'danger') {
+            actionBtn.classList.add('bg-red-500', 'hover:bg-red-600');
+        } else {
+            actionBtn.classList.add('bg-brand-500', 'hover:bg-brand-600');
+        }
+
+        onConfirmCallback = onConfirm;
+
+        const modal = document.getElementById('confirmModal');
+        const modalContent = document.getElementById('confirmModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        const modalContent = document.getElementById('confirmModalContent');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
+    }
+
+    document.getElementById('confirmModalActionBtn').onclick = function() {
+        if (onConfirmCallback) {
+            onConfirmCallback();
+        }
+        closeConfirmModal();
+    };
+</script>

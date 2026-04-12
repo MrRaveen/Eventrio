@@ -5,7 +5,9 @@ from flask import Blueprint, redirect, session, request, jsonify
 from app.models.userAcc import userAcc, PaymentInfo
 from datetime import datetime, timezone
 from flask import Blueprint, redirect, session, request, jsonify, url_for
+
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+
 payment = Blueprint('payment', __name__)
 
 @payment.route('/create-checkout-session', methods=['POST'])
@@ -29,7 +31,7 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url= url_for('ui_endpoints.dashboard', _external=True), 
+            success_url= url_for('ui_endpoints.user_profile_ui', _external=True), 
             cancel_url= request.host_url + 'pricing',    
             client_reference_id=user_id,
             metadata={

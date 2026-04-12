@@ -1,6 +1,6 @@
 from enum import Enum
 
-class userRoles(str, Enum):
+class RoleEnum(str, Enum):
     MANAGER = 'manager'
     STUDENT = 'student'
     BUSINESS_OWNER = 'business owner'
@@ -9,4 +9,3 @@ class userRoles(str, Enum):
     SPORT_COACH = 'sport coach'
 
 
-    

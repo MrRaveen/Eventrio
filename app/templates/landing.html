@@ -1,26 +1,25 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="flex-grow flex items-center justify-center relative overflow-hidden">
-    <div
-        class="absolute top-[-10%] left-[10%] w-96 h-96 bg-primary-600 rounded-full mix-blend-screen filter blur-[100px] opacity-20">
-    </div>
-    <div
-        class="absolute bottom-[-10%] right-[10%] w-96 h-96 bg-primary-800 rounded-full mix-blend-screen filter blur-[100px] opacity-30">
+<div class="flex-grow flex items-center justify-center relative overflow-hidden py-20 bg-white">
+    <!-- Subtle Background Accents -->
+    <div class="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
+        <div class="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-brand-50 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-blue-50 rounded-full blur-[100px]"></div>
     </div>
 
     <div class="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-        <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-8 text-white">
-            Next-Gen <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-blue-200">Event
-                Automation</span>
+        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-slate-900 leading-tight">
+            Next-Gen <br>
+            <span class="text-brand-600">Event Automation</span>
         </h1>
-        <p class="mt-4 text-xl md:text-2xl text-gray-300 max-w-2xl mx-auto mb-10">
+        <p class="mt-4 text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
             Automate your virtual events, scale your audience, and manage your online presence seamlessly with advanced
             AI workflows.
         </p>
-        <div class="flex justify-center gap-4">
+        <div class="flex flex-col sm:flex-row justify-center gap-6">
             <a href="{{ url_for('auth_login.login') }}"
-                class="px-8 py-4 bg-primary-600 hover:bg-primary-500 text-white font-semibold rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300 transform hover:-translate-y-1">
-                Login / Create Account
+                class="px-10 py-5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-2xl shadow-xl shadow-brand-200 transition-all duration-300 transform hover:-translate-y-1 text-lg">
+                Get Started for Free
             </a>
         </div>
     </div>

@@ -6,3 +6,4 @@ class Participants(Document):
     name = StringField(required=True)
     email = StringField(required=True)
     eventID = StringField(required=True)
+    orgID = StringField(required=True)

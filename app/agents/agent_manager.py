@@ -20,7 +20,6 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
     user = userAcc.objects(sub=owner_id).first()
     if not user:
         return f"Error: User not found with ID {owner_id}"
-
     # For MVP, check projectsCount limit
     if user.limits.projectsCount >= 5 and user.payments.tier == 'free':
         return "Error: Free tier limit of 5 projects reached. Please upgrade to create more."

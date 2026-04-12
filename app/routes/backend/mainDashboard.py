@@ -1,3 +1,7 @@
+from app.models.participants import Participants
+from app.models.posts import Posts
+from app.requestsDto.createOrgReq import createOrgReq
+from pydantic import ValidationError
 from flask import (
     Blueprint,
     jsonify,
@@ -7,36 +11,123 @@ from flask import (
     session,
     url_for,
 )
+from bson import ObjectId
+from mongoengine import get_connection
 from app.agents.agent_manager import agent_manager
 from app.models.organizations import Organizations
 from app.models.projects import Projects
 from app.models.userAcc import userAcc
 
 main_dashboard = Blueprint('main_dashboard', __name__)
+
+#create organization
 @main_dashboard.route('/create-org', methods=['POST'])
 def create_org():
     data = request.json
     try:
-        user_info = session.get('user', {})
-        user_sub = user_info.get('sub')
+        #get user ID
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                "message": "error",
+                "data": "User not logged in"
+            }), 401
+        #validate inserting json
+        validatedJson = createOrgReq(**data)
+        #create the org
         new_org = Organizations(
-            orgName=data.get('orgName', 'Unnamed Org'),
-            address=data.get('address', ''),
-            createdBy=user_sub,
-            industry=[data.get('industry')],
-            userRole=[data.get('userRole', 'manager')]
+            orgName=validatedJson.orgName,
+            address=validatedJson.address,
+            createdBy=user_id,
+            industry=[validatedJson.industry.value],
+            userRole=[validatedJson.userRole.value]
         )
         new_org.save()
-        user_id = session.get('user_id')
-        if user_id:
-            user = userAcc.objects(sub=user_id).first()
-            if user:
-                user.limits.orgCount += 1
-                user.save()
-        return jsonify({"message": "Success", "id": str(new_org.id)})
+        user = userAcc.objects(sub=user_id).first()
+        if user:
+            user.limits.orgCount += 1
+            user.save()  
+        return jsonify({
+                "message": "Success",
+                "data": "Organization is created successfully"
+            }), 201  
+    except ValidationError as e:
+        return jsonify({
+                "message": "error",
+                "data": f"Validation error: {str(e)}"
+            }), 400
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({
+                "message": "error",
+                "data": f"An error occurred: {str(e)}"
+            }), 500  
 
+#update org
+@main_dashboard.route('/update-org/<string:org_id>', methods=['PUT'])
+def update_org(org_id):
+    data = request.json
+    try:
+        #get user ID
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                "message": "error",
+                "data": "User not logged in"
+            }), 401
+        #validate inserting json
+        validatedJson = createOrgReq(**data)
+        #find the org and update
+        org = Organizations.objects(id=org_id, createdBy=user_id).first()
+        if not org:
+            return jsonify({
+                "message": "error",
+                "data": "Organization not found or access denied"
+            }), 404
+        org.orgName = validatedJson.orgName
+        org.address = validatedJson.address
+        org.industry = [validatedJson.industry.value]
+        org.userRole = [validatedJson.userRole.value]
+        org.save()
+        return jsonify({
+                "message": "Success",
+                "data": "Organization is updated successfully"
+            }), 200  
+    except ValidationError as e:
+        return jsonify({
+                "message": "error",
+                "data": f"Validation error: {str(e)}"
+            }), 400
+    except Exception as e:
+        return jsonify({
+                "message": "error",
+                "data": f"An error occurred: {str(e)}"
+            }), 500  
+
+#remove org
+@main_dashboard.route('/remove-org/<string:org_id>', methods=["DELETE"])
+def remove_org(org_id):
+    client = get_connection()
+    try:
+        db_org_id = ObjectId(org_id)
+    except:
+        db_org_id = org_id 
+    try:
+        with client.start_session() as session:
+            with session.start_transaction():
+                Organizations._get_collection().delete_one({"_id": db_org_id}, session=session)
+                Projects._get_collection().delete_many({"orgID": org_id}, session=session)
+                Posts._get_collection().delete_many({"orgID": org_id}, session=session)
+                Participants._get_collection().delete_many({"orgID": org_id}, session=session) 
+        return jsonify({
+            "message": "success",
+            "data": "Organization and all related data removed successfully."
+        }), 200
+    except Exception as e:
+        return jsonify({
+                "message": "error",
+                "data": f"Transaction failed and was rolled back: {str(e)}"
+        }), 500
+#get all the projects according to org ID
 @main_dashboard.route('/get-org-projects/<string:org_id>')
 def get_org_events(org_id):
     try:
@@ -53,20 +144,7 @@ def get_org_events(org_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@main_dashboard.route('/plan-event', methods=['POST'])
-def chat_planning():
-    prompt = request.json.get('prompt')
-    if not prompt:
-        return jsonify({"error": "Prompt required"}), 400
-    if not agent_manager.planning_agent:
-        return jsonify({"error": "Planning agent not initialized"}), 500
-    try:
-        user_id = session.get('user_id', 'unknown_user')
-        response = agent_manager.run_agent(agent_manager.planning_agent, prompt, user_id)
-        return jsonify({"response": response})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+#main endpoint to plan the event
 @main_dashboard.route('/plan-event/main', methods=['POST'])
 def chat_main():
     prompt = request.json.get('prompt')
@@ -75,7 +153,6 @@ def chat_main():
     if not getattr(agent_manager, 'main_agent', None):
         return jsonify({"error": "Main agent not initialized"}), 500
     user_id = session.get('user_id', 'unknown_user')
-    # Injecting system instructions manually
     enriched_prompt = f"[System: User executing this is '{user_id}'. You can use this ID for owner_id in tools] User Request: {prompt}"
     try:
         response = agent_manager.run_agent(agent_manager.main_agent, enriched_prompt, user_id)
@@ -123,5 +200,20 @@ def trigger_stream_agent():
         return jsonify({"response": response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500        
+
+# @main_dashboard.route('/plan-event', methods=['POST'])
+# def chat_planning():
+#     prompt = request.json.get('prompt')
+#     if not prompt:
+#         return jsonify({"error": "Prompt required"}), 400
+#     if not agent_manager.planning_agent:
+#         return jsonify({"error": "Planning agent not initialized"}), 500
+#     try:
+#         user_id = session.get('user_id', 'unknown_user')
+#         response = agent_manager.run_agent(agent_manager.planning_agent, prompt, user_id)
+#         return jsonify({"response": response})
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
 
 

@@ -21,3 +21,4 @@ mcp
 cloudinary
 mongoengine-stubs
 stripe
+pydantic

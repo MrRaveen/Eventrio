@@ -7,3 +7,4 @@ class Posts(Document):
     description = StringField()
     imageUrl = StringField()
     projectID = StringField()
+    orgID = StringField()

@@ -1,3 +1,5 @@
+from app.models.enum.RoleEnum import RoleEnum
+from app.models.enum.IndustryEnum import IndustryEnum
 from mongoengine import Document, StringField, ListField
 
 class Organizations(Document):
@@ -6,11 +8,5 @@ class Organizations(Document):
     orgName = StringField(required=True)
     address = StringField()
     createdBy = StringField(required=True)
-    industry = ListField(StringField(choices=(
-        'IT', 'Health care', 'Sports', 'Business events', 
-        'Casual', 'Education (school)', 'Competitions'
-    )))
-    userRole = ListField(StringField(choices=(
-        'manager', 'student', 'business owner', 
-        'event planner', 'teacher', 'sport coach'
-    )))
+    industry = ListField(StringField(choices=[e.value for e in IndustryEnum]))
+    userRole = ListField(StringField(choices=[e.value for e in RoleEnum]))
