@@ -22,3 +22,5 @@ cloudinary
 mongoengine-stubs
 stripe
 pydantic
+resend
+redis

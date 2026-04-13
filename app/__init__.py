@@ -35,9 +35,11 @@ def create_app():
     from app.routes.backend.paymentRoutes import payment
     from app.routes.ui.UIEndpoints import ui_endpoints
     from app.routes.backend.mainDashboard import main_dashboard
+    from app.routes.backend.customerUi import customer_ui
     oauth.init_app(app)
     app.register_blueprint(ui_endpoints)
     app.register_blueprint(auth_login)
     app.register_blueprint(payment,url_prefix='/payment')
     app.register_blueprint(main_dashboard,url_prefix='/main-dashboard')
+    app.register_blueprint(customer_ui, url_prefix='/customer')
     return app

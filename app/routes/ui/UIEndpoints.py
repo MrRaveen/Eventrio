@@ -1,3 +1,6 @@
+from typing import List
+from app.responseDto.allEventsRes import ProjectSchema
+from datetime import datetime, timezone
 from flask import (
     Blueprint,
     jsonify,
@@ -116,7 +119,42 @@ def event_dashboard(event_id):
         script_text = unquote(raw_encoded)
     return render_template('event_dashboard.html', event=event, script_text=script_text)
 
+@ui_endpoints.route('/browse-events')
+def browse_events():
+    now = datetime.now(timezone.utc)
+    selected_id = request.args.get('selected')
+    events = Projects.objects(startDate__gt=now, endDate__gt=now).order_by('startDate')
+    
+    allEventsResponse: List[ProjectSchema] = []
+    for e in events:
+        organization = Organizations.objects(id=e.orgID).first()
+        org_name = organization.orgName if organization else "Unknown Organization"
+        
+        resObj = ProjectSchema(
+            id = str(e.id),
+            name = e.name,
+            description = e.description,
+            industry = e.industry,
+            userRole = e.userRole,
+            attendeeCountExpected = e.attendeeCountExpected,
+            startDate = e.startDate,
+            endDate = e.endDate,
+            isEventStarted = e.isEventStarted,
+            orgName = org_name,
+            orgID = e.orgID,
+            mediaLinks = e.mediaLinks,
+            tasks = e.tasks
+        )
+        allEventsResponse.append(resObj)
+        
 
-
-
-
+    selected_event = None
+    if selected_id:
+        selected_event = next((e for e in allEventsResponse if e.id == selected_id), None)
+    
+    if not selected_event and allEventsResponse:
+        selected_event = allEventsResponse[0]
+        
+    return render_template('browse_events.html', 
+                         events=allEventsResponse, 
+                         selected_event=selected_event)

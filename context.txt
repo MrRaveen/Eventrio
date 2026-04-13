@@ -1,0 +1,37 @@
+📋 Project Context: Eventrio MVP
+Project Overview
+I am building "Eventrio," an AI-powered event planning application. The backend is built with Python, Flask, and MongoEngine (MongoDB). The core feature is an AI Planner that uses the Google GenAI SDK (ADK) to orchestrate multiple agents to automatically plan events, generate media, and interface with external tools.
+
+Core Architecture & Agents
+The application uses an EventAgentsManager to coordinate several AI agents:
+
+main_agent: The central orchestrator that parses user requests and delegates to sub-agents.
+
+planning_agent: Handles the core logic and uses Native/MCP tools.
+
+media_agent: Generates visual/text assets.
+
+social_media_agent: Drafts promotional content.
+
+Native Tools Available to Agents: create_event (DB insertion), generate_media_for_event (Pollinations AI), create_google_doc_for_event (Google Docs API), schedule_real_google_calendar (Google Calendar API), and save_tasks_to_db.
+
+The Custom Mocking Infrastructure (Current Focus)
+Because I am testing locally without the live Google ADK/APIs, we built a highly customized, global import interceptor to fake the Google SDK.
+
+The Interceptor (app/inspector/hook.py): Uses sys.meta_path to intercept fully-qualified imports (e.g., google.adk.runners, google.genai.types) at runtime before the application loads. It also intercepts parent packages (google.adk) by routing them to an empty __init__.py to prevent ImportError exceptions.
+
+The Mocks (app/inspector/mocks/): Contains lightweight dummy classes (Agent, Runner, InMemorySessionService, types.Content, types.Part) that safely absorb the initialization arguments my application passes.
+
+Async Streaming: The mocked Runner perfectly mimics Google's nested response structure (event.content.parts[0].text) by yielding data via an Asynchronous Generator, allowing the frontend to test real-time typing/streaming UI states.
+
+Environment & Test Data
+To test the tool execution pipeline without an LLM generating the parameters, the mock run_async pipeline is currently hardcoded to pull test variables from the .env file and pass them into the local tool functions:
+
+TEST_ORG_ID, TEST_EVENT_NAME, TEST_DES, TEST_START_TIME, TEST_END_TIME, TEST_PLAN_TEXT.
+
+TEST_TASKS_DATA: A strict JSON array string.
+
+TEST_SCRIPT_CONTEXT_IMG_GEN: A multi-line string used to test URL-encoding for Pollinations image generation.
+
+Current Status
+The application factory successfully initializes, the database connects via MongoEngine, the import hook successfully bypasses the Google SDK, and the mocked async event loop triggers the local DB/API tools and streams simulated text back to the client.
