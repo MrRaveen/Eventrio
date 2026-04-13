@@ -190,7 +190,7 @@ class EventAgentsManager:
             other_tools = [mcp_toolset] if mcp_toolset else []
 
             self.planning_agent = Agent(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-2.5-flash-lite',
                 name='planning_agent',
                 description='Plans events and schedules them natively and externally.',
                 instruction='You are an autonomous event planner. When asked to create an event, DO NOT ask the user for tasks or a plan. Automatically generate a detailed list of tasks including their start and due dates based on the event context. Use create_event to save to DB (IMPORTANT: Extract the org_id from the [Context] block if present, and use the provided owner_id). IMPORTANT: For schedule_real_google_calendar, you MUST convert and format start_time and end_time as valid RFC3339 datetime strings (e.g. 2026-04-09T00:30:00Z) before calling it. For save_tasks_to_db, pass `tasks_data_json` as a valid JSON string (an array of dictionaries). Draft the document using create_google_doc_for_event. Finally, you MUST use generate_media_for_event to generate an image and announcer script for the event. For the script_context, provide a short, fun 1-sentence welcome script for the announcer.',
@@ -198,7 +198,7 @@ class EventAgentsManager:
             )
 
             self.media_agent = Agent(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-2.5-flash-lite',
                 name='media_agent',
                 description='Generates media items (scripts, images) for a specific event.',
                 instruction='Use generate_media_for_event for DB links and generate_pollinations_image to create real image URLs.',
@@ -206,7 +206,7 @@ class EventAgentsManager:
             )
 
             self.social_media_agent = Agent(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-2.5-flash-lite',
                 name='social_media_agent',
                 description='Creates and evaluates social media posts.',
                 instruction='Craft engaging social media posts. Ask the user, then use send_buffer_social_post to stage them.',
@@ -214,7 +214,7 @@ class EventAgentsManager:
             )
 
             self.stream_handler_agent = Agent(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-2.5-flash-lite',
                 name='stream_handler_agent',
                 description='Handles stream initiation logic.',
                 instruction='You act as the automatic handler for starting event streams.',
@@ -222,7 +222,7 @@ class EventAgentsManager:
             )
 
             self.main_agent = Agent(
-                model='gemini-3.1-flash-lite-preview',
+                model='gemini-2.5-flash-lite',
                 name='main_agent',
                 description='The primary orchestrator agent that delegates to sub-agents.',
                 instruction='You are the central coordinator. Parse context (including any Organization ID in the [Context] block) and transfer control to the necessary sub-agent based on user request (planning_agent, media_agent, social_media_agent). Ensure all context, especially IDs, is passed through.',

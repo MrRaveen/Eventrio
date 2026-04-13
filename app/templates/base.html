@@ -15,19 +15,19 @@
                     },
                     colors: {
                         brand: {
-                            50: '#f3f0f9',
-                            100: '#e2dced',
-                            200: '#c8bfe0',
-                            500: '#9575cd',
-                            600: '#7e57c2',
-                            700: '#5e35b1',
-                            900: '#2d1b4d',
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            500: '#7c3aed',
+                            600: '#6d28d9',
+                            700: '#5b21b6',
+                            900: '#4c1d95',
                         },
                         primary: {
-                            400: '#9575cd',
-                            500: '#7e57c2',
-                            600: '#5e35b1',
-                            900: '#2d1b4d',
+                            400: '#7c3aed',
+                            500: '#6d28d9',
+                            600: '#5b21b6',
+                            900: '#4c1d95',
                         }
                     }
                 }
@@ -35,7 +35,7 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
         /* Professional scrollbars */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -43,9 +43,11 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased transition-colors duration-200">
+<body class="bg-[#f8fafc] text-slate-900 min-h-screen flex flex-col antialiased transition-colors duration-200">
     {% block content %}
     {% endblock %}
     {% include 'components/confirm_modal.html' %}
+    {% block scripts %}
+    {% endblock %}
 </body>
 </html>

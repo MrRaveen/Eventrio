@@ -9,14 +9,14 @@
             <span class="text-xl font-bold text-brand-700">Eventrio</span>
         </div>
         <nav class="flex-1 px-4 py-6 space-y-1">
-            <a href="{{ url_for('ui_endpoints.dashboard', tab='orgs') }}"
+            <a href="{{ url_for('ui_endpoints.dashboard', tab='engagement') }}"
                 class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v16a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
                     </path>
                 </svg>
-                Organizations
+                Engagement
             </a>
             <a href="{{ url_for('ui_endpoints.ai_planner') }}"
                 class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 bg-brand-50 text-brand-700 font-medium">
@@ -26,6 +26,23 @@
                     </path>
                 </svg>
                 AI Planner
+            </a>
+            <a href="{{ url_for('ui_endpoints.dashboard', tab='orgs') }}"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                    </path>
+                </svg>
+                Organizations
+            </a>
+            <a href="{{ url_for('ui_endpoints.dashboard', tab='profile') }}"
+                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Profile
             </a>
             <a href="{{ url_for('ui_endpoints.dashboard', tab='settings') }}"
                 class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
@@ -37,14 +54,6 @@
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
                 Settings
-            </a>
-            <a href="{{ url_for('ui_endpoints.dashboard', tab='profile') }}"
-                class="flex items-center gap-3 px-4 py-2.5 rounded-md transition-all duration-200 text-slate-600 hover:bg-slate-200/50 hover:text-slate-900">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
-                Profile
             </a>
         </nav>
     </aside>
@@ -87,7 +96,7 @@
             <div class="max-w-4xl mx-auto w-full space-y-6">
                 <!-- Welcome Message -->
                 <div class="flex gap-4">
-                    <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>
@@ -116,7 +125,7 @@
                                   rows="1"
                                   onkeydown="handleKey(event)"></textarea>
                         <button onclick="sendGlobalChat()" 
-                                class="w-12 h-12 bg-brand-500 hover:bg-brand-600 text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-brand-500/30 shrink-0 mb-1 active:scale-95">
+                                class="w-12 h-12 bg-brand-600 hover:bg-brand-700 text-white rounded-xl flex items-center justify-center transition-all shadow-lg shadow-brand-500/30 shrink-0 mb-1 active:scale-95">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
                             </svg>
@@ -159,7 +168,7 @@
         const messageContainer = document.createElement('div');
         messageContainer.className = 'max-w-4xl mx-auto w-full flex flex-col items-end';
         messageContainer.innerHTML = `
-            <div class="bg-brand-500 text-white p-4 rounded-2xl rounded-tr-none shadow-md max-w-[85%] border border-brand-600">
+            <div class="bg-brand-600 text-white p-4 rounded-2xl rounded-tr-none shadow-md max-w-[85%] border border-brand-700">
                 ${text.replace(/\n/g, '<br>')}
             </div>
         `;
@@ -173,7 +182,7 @@
         loadingContainer.className = 'max-w-4xl mx-auto w-full flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2';
         loadingContainer.id = 'ai-loading';
         loadingContainer.innerHTML = `
-            <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
+            <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
                 <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                 </svg>
@@ -203,7 +212,7 @@
                 const aiResponse = document.createElement('div');
                 aiResponse.className = 'max-w-4xl mx-auto w-full flex items-start gap-4 animate-in fade-in slide-in-from-bottom-2';
                 aiResponse.innerHTML = `
-                    <div class="w-10 h-10 rounded-xl bg-brand-500 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-brand-500/20">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                         </svg>

@@ -1,3 +1,5 @@
+from app.inspector.execute import execute
+execute()
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 

@@ -1,0 +1,2 @@
+def InMemorySessionService():
+    pass

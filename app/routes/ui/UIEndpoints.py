@@ -49,8 +49,12 @@ def user_profile_ui():
 @ui_endpoints.route('/dashboard')
 def dashboard():
     tab = request.args.get('tab', 'orgs')
+    user_id = session.get('user_id')
+    user = None
     try:
-        user_id = session.get('user_id')
+        if user_id:
+            user = userAcc.objects(sub=user_id).first()
+        
         org_docs = Organizations.objects(createdBy=user_id)
         orgs = []
         for o in org_docs:
@@ -63,20 +67,25 @@ def dashboard():
             })
     except Exception as e:
         orgs = []
-        print(f"Failed to fetch orgs: {e}")
+        print(f"Failed to fetch data: {e}")
     
     industries = [e.value for e in IndustryEnum]
     roles = [e.value for e in RoleEnum]
     return render_template('dashboard.html', 
                          active_tab=tab, 
                          orgs=orgs, 
+                         user=user,
                          industries=industries, 
                          roles=roles)    
 
 @ui_endpoints.route('/ai-planner')
 def ai_planner():
+    user_id = session.get('user_id')
+    user = None
     try:
-        user_id = session.get('user_id')
+        if user_id:
+            user = userAcc.objects(sub=user_id).first()
+        
         org_docs = Organizations.objects(createdBy=user_id)
         orgs = []
         for o in org_docs:
@@ -89,10 +98,11 @@ def ai_planner():
             })
     except Exception as e:
         orgs = []
-        print(f"Failed to fetch orgs: {e}")
+        print(f"Failed to fetch data: {e}")
     
     return render_template('ai_planner.html', 
                          active_tab='ai-planner', 
+                         user=user,
                          orgs=orgs)
 
 @ui_endpoints.route('/event-dashboard/<string:event_id>')
