@@ -17,6 +17,7 @@ class Projects(Document):
     orgID = StringField()
     ownerID = StringField()
     mediaLinks = ListField(StringField())
+    meetingUrl = StringField(default="")
     slideShowLink = StringField()
     scriptLink = StringField()
     tasks = ListField(DictField())

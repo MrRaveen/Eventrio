@@ -98,6 +98,47 @@ def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) ->
     doc_link = f"https://docs.google.com/document/d/{doc_id}/edit"
     return f"Successfully created your Google Doc: {doc_link}"
 
+#create google meet link
+def automate_google_meet(user_access_token, event_details):
+    if not user_access_token or not event_details:
+        return {"error": "Missing access token or event details."}
+        
+    url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
+    headers = {"Authorization": f"Bearer {user_access_token}"}
+    
+    try:
+        title = event_details.get('title', 'Eventrio Meeting')
+        start_time = event_details.get('start_time')
+        end_time = event_details.get('end_time')
+        
+        if not start_time or not end_time:
+            return {"error": "Start time and end time are required for a meeting."}
+
+        payload = {
+            "summary": title,
+            "start": {"dateTime": start_time, "timeZone": "Asia/Colombo"},
+            "end": {"dateTime": end_time, "timeZone": "Asia/Colombo"},
+            "conferenceData": {
+                "createRequest": {
+                    "requestId": str(uuid.uuid4()),
+                    "conferenceSolutionKey": {"type": "hangoutsMeet"}
+                }
+            }
+        }
+        
+        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        
+        if response.status_code in (200, 201):
+            data = response.json()
+            link = data.get('hangoutLink')
+            if link:
+                return {"link": link}
+            return {"error": "Google API did not return a hangout link."}
+        else:
+            return {"error": f"Google Calendar API Error: {response.text}"}
+    except Exception as e:
+        return {"error": f"Failed to automate Google Meet: {str(e)}"}
+
 #post fb posts
 def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
     if page_id:
@@ -105,8 +146,8 @@ def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
         accounts_url = f"https://graph.facebook.com/v19.0/me/accounts?access_token={user_token}"
         try:
             accounts_data = requests.get(accounts_url).json()
-        except:
-            return "Failed: Could not reach Facebook API."
+        except Exception as e:
+            return {"error": f"Failed: Could not reach Facebook API. {str(e)}"}
         
         page_token = None
         for page in accounts_data.get('data', []):
@@ -115,7 +156,7 @@ def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
                 break
                 
         if not page_token:
-            return "Failed: Page not found or permissions missing."
+            return {"error": "Failed: Page not found or permissions missing."}
 
         #Publish the Photo to the Page (Note the /photos endpoint)
         post_url = f"https://graph.facebook.com/v19.0/{page_id}/photos"
@@ -127,14 +168,14 @@ def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
                 'access_token': page_token
             }
             try:
-                response = requests.post(post_url, data=payload)
-                return str(response.json())
+                response = requests.post(post_url, data=payload, timeout=10)
+                return response.json()
             except Exception as e:
-                return f"Failed to post: {str(e)}"
+                return {"error": f"Failed to post: {str(e)}"}
         else:
-            return "Failed: You must provide either an image_url or a local_image_path."
+            return {"error": "Failed: You must provide an image_url."}
     else:
-        return "Skipped FB publishing (No Page Selected)"    
+        return None  # Skipped FB publishing (No Page Selected)
 
 #create the google calendar part
 def schedule_real_google_calendar(owner_id: str, event_name: str, start_time: str, end_time: str) -> str:

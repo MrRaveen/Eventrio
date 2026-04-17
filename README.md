@@ -54,3 +54,23 @@ if user:
 Organizations.objects(status='inactive').delete()
 ```
 
+
+```
+import requests
+
+def delete_facebook_post(page_token, post_id):
+    """
+    Deletes a specific post from a Facebook Page.
+    """
+    delete_url = f"https://graph.facebook.com/v19.0/{post_id}"
+    
+    # Pass the token as a query parameter for DELETE requests
+    payload = {
+        'access_token': page_token
+    }
+    
+    response = requests.delete(delete_url, params=payload)
+    
+    # A successful deletion returns {"success": true}
+    return response.json()
+```

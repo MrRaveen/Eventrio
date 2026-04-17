@@ -11,6 +11,8 @@ from flask import (
     session,
     url_for
 )
+from urllib.parse import urlparse
+import cloudinary.uploader
 import requests
 from bson import ObjectId
 from mongoengine import get_connection
@@ -107,18 +109,81 @@ def update_org(org_id):
 #remove org
 @main_dashboard.route('/remove-org/<string:org_id>', methods=["DELETE"])
 def remove_org(org_id):
-    client = get_connection()
+    mongo_client = get_connection()
     try:
         db_org_id = ObjectId(org_id)
-    except:
-        db_org_id = org_id 
+    except Exception:
+        return jsonify({
+            "message": "error",
+            "data": "Invalid organization ID format."
+        }), 400
+
     try:
-        with client.start_session() as session:
-            with session.start_transaction():
-                Organizations._get_collection().delete_one({"_id": db_org_id}, session=session)
-                Projects._get_collection().delete_many({"orgID": org_id}, session=session)
-                Posts._get_collection().delete_many({"orgID": org_id}, session=session)
-                Participants._get_collection().delete_many({"orgID": org_id}, session=session) 
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({
+                "message": "error",
+                "data": "User not logged in."
+            }), 401
+
+        foundUser = userAcc.objects(sub=user_id).first()
+        if not foundUser:
+            return jsonify({
+                "message": "error",
+                "data": "User not found."
+            }), 404
+
+        fbToken = None
+        if hasattr(foundUser, 'socialMediaTokens') and foundUser.socialMediaTokens:
+            fbToken = getattr(foundUser.socialMediaTokens, 'facebook', None)
+
+        with mongo_client.start_session() as mongo_session:
+            with mongo_session.start_transaction():
+                # Check if organization exists and belongs to user
+                org_query = {"_id": db_org_id, "createdBy": user_id}
+                org_exists = Organizations._get_collection().find_one(org_query, session=mongo_session)
+                if not org_exists:
+                    return jsonify({
+                        "message": "error",
+                        "data": "Organization not found or access denied."
+                    }), 404
+
+                Organizations._get_collection().delete_one(org_query, session=mongo_session)
+
+                #remove the media file safely
+                foundProject = Projects.objects(orgID=org_id)
+                for fo in foundProject:
+                    if hasattr(fo, 'mediaLinks') and fo.mediaLinks:
+                        for imgUrl in fo.mediaLinks:
+                            try:
+                                path = urlparse(imgUrl).path
+                                if '/upload/' in path:
+                                    parts = path.split('/upload/')[-1].split('/')
+                                    if parts[0].startswith('v') and parts[0][1:].isdigit():
+                                        parts.pop(0)    
+                                    public_id_with_ext = '/'.join(parts)
+                                    public_id = public_id_with_ext.rsplit('.', 1)[0]
+                                    cloudinary.uploader.destroy(public_id)
+                            except Exception as cloud_e:
+                                print(f"Cloudinary deletion failed for {imgUrl}: {cloud_e}")
+
+                allPosts = Posts.objects(orgID=org_id)
+                if fbToken:
+                    for post in allPosts:
+                        try:
+                            if hasattr(post, 'postID') and post.postID:
+                                delete_url = f"https://graph.facebook.com/v19.0/{post.postID}"
+                                payload = {
+                                    'access_token': fbToken
+                                }
+                                requests.delete(delete_url, params=payload, timeout=5)
+                        except Exception as fb_e:
+                            print(f"Facebook post deletion failed for {post.postID}: {fb_e}")
+
+                Projects._get_collection().delete_many({"orgID": org_id}, session=mongo_session)
+                Posts._get_collection().delete_many({"orgID": org_id}, session=mongo_session)
+                Participants._get_collection().delete_many({"orgID": org_id}, session=mongo_session) 
+
         return jsonify({
             "message": "success",
             "data": "Organization and all related data removed successfully."
@@ -126,8 +191,10 @@ def remove_org(org_id):
     except Exception as e:
         return jsonify({
                 "message": "error",
-                "data": f"Transaction failed and was rolled back: {str(e)}"
+                "data": f"Transaction failed or an error occurred: {str(e)}"
         }), 500
+
+        
 #get all the projects according to org ID
 @main_dashboard.route('/get-org-projects/<string:org_id>')
 def get_org_events(org_id):

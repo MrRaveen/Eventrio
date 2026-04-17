@@ -50,6 +50,18 @@
                 </svg>
                 <span class="text-[10px] lg:text-sm text-center lg:text-left">Script</span>
             </a>
+            {% if event.meetingUrl %}
+            <!-- Online Meeting -->
+            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='meeting') }}"
+                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'meeting' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <span class="text-[10px] lg:text-sm text-center lg:text-left">Online Meeting</span>
+            </a>
+            {% endif %}
             <!-- Back to Dash -->
             <div class="pt-6 mt-6 border-t border-slate-100">
                 <a href="{{ url_for('ui_endpoints.dashboard') }}"
@@ -237,6 +249,35 @@
                 {% else %}
                 <p class="text-slate-400 italic text-center py-8">No script has been generated for this event yet.</p>
                 {% endif %}
+            </div>
+
+            {% elif active_tab == 'meeting' and event.meetingUrl %}
+            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 text-center space-y-4 py-12 flex flex-col items-center">
+                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-xl mb-2">Google Meet Details</h3>
+                <p class="text-slate-500 mb-6 w-full max-w-lg mx-auto">This event has a designated online meeting room ready for attendees. Click below to join.</p>
+                
+                <div class="inline-flex flex-col items-center justify-center p-8 mt-4 bg-slate-50 border border-slate-200 rounded-xl w-full max-w-md mx-auto">
+                    <div class="bg-brand-100 text-brand-600 p-4 rounded-full mb-6 relative shadow-inner">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                    </div>
+                    
+                    <span class="text-slate-500 font-mono text-xs uppercase tracking-widest font-bold mb-2">Meeting Link</span>
+                    <a href="{{ event.meetingUrl }}" target="_blank" class="text-brand-600 hover:text-brand-700 font-mono text-sm mb-8 break-all transition-colors">{{ event.meetingUrl }}</a>
+                    
+                    <a href="{{ event.meetingUrl }}" target="_blank"
+                        class="px-8 py-3.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/30 flex items-center gap-3">
+                        Join Meeting Now
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                            </path>
+                        </svg>
+                    </a>
+                </div>
             </div>
             {% endif %}
         </div>
