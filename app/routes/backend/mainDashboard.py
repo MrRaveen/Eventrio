@@ -9,8 +9,9 @@ from flask import (
     render_template,
     request,
     session,
-    url_for,
+    url_for
 )
+import requests
 from bson import ObjectId
 from mongoengine import get_connection
 from app.agents.agent_manager import agent_manager
@@ -147,7 +148,9 @@ def get_org_events(org_id):
 #main endpoint to plan the event
 @main_dashboard.route('/plan-event/main', methods=['POST'])
 def chat_main():
-    prompt = request.json.get('prompt')
+    data = request.json
+    prompt = data.get('prompt')
+    fbPageID = data.get('fbPageID')
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
     if not getattr(agent_manager, 'main_agent', None):
@@ -155,7 +158,7 @@ def chat_main():
     user_id = session.get('user_id', 'unknown_user')
     enriched_prompt = f"[System: User executing this is '{user_id}'. You can use this ID for owner_id in tools] User Request: {prompt}"
     try:
-        response = agent_manager.run_agent(agent_manager.main_agent, enriched_prompt, user_id)
+        response = agent_manager.run_agent(agent_manager.main_agent, prompt=enriched_prompt, fbPageID=fbPageID, user_id=user_id)
         return jsonify({"response": response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -214,6 +217,50 @@ def trigger_stream_agent():
 #         return jsonify({"response": response})
 #     except Exception as e:
 #         return jsonify({"error": str(e)}), 500
+
+#check social status
+@main_dashboard.route('/social-status', methods=['GET'])
+def social_status():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+    try:
+        user = userAcc.objects(sub=user_id).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        
+        tokens = user.socialMediaTokens
+        status = {
+            "facebook": bool(tokens and tokens.facebook and tokens.facebook != ""),
+            "linkedIn": bool(tokens and tokens.linkedIn and tokens.linkedIn != ""),
+            "youtube": bool(tokens and tokens.youtube and tokens.youtube != ""),
+            "pinterest": bool(tokens and tokens.pinterest and tokens.pinterest != "")
+        }
+        return jsonify(status), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+#get the FB pages
+@main_dashboard.route('/get-fb-pages', methods=['GET'])
+def get_fb_pages():
+    user_id = session.get('user_id')
+    pages = []
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+    try:
+       userData = userAcc.objects(sub=user_id).first()
+       if userData and userData.socialMediaTokens and userData.socialMediaTokens.facebook:
+            accounts_url = f"https://graph.facebook.com/v19.0/me/accounts?access_token={userData.socialMediaTokens.facebook}"
+            accounts_data = requests.get(accounts_url).json()
+            for page in accounts_data.get('data', []):
+                pages.append({
+                    'page_id': page.get('id'),
+                    'page_name': page.get('name')
+                })
+       return jsonify(pages)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 

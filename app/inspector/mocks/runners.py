@@ -1,3 +1,6 @@
+from app.agents.manual_services import post_image_to_facebook_page
+from app.models.userAcc import userAcc
+from app.models.projects import Projects
 from app.agents.manual_services import save_tasks_to_db
 from app.agents.manual_services import schedule_real_google_calendar
 from app.agents.manual_services import create_google_doc_for_event
@@ -24,7 +27,7 @@ class Runner:
         self.session_service = session_service
         self.auto_create_session = auto_create_session
 
-    async def run_async(self, user_id=None, session_id=None, new_message=None, **kwargs):
+    async def run_async(self, user_id=None,fbPageID=None,session_id=None, new_message=None, **kwargs):
         import os
         import asyncio
 
@@ -57,7 +60,19 @@ class Runner:
                 event_id=clean_event_id,
                 script_context=os.getenv('TEST_SCRIPT_CONTEXT_IMG_GEN')
             )
+            updatedUser = userAcc.objects(sub=user_id).first()
+            tokenFb = updatedUser.socialMediaTokens.facebook if (updatedUser and updatedUser.socialMediaTokens) else None
+            currentProject = Projects.objects(id=clean_event_id).first()
+            media = currentProject.mediaLinks[0] if currentProject and currentProject.mediaLinks else None
             
+            fb_status = post_image_to_facebook_page(
+                image_url=media,
+                message=os.getenv('TEST_DES'),
+                user_token=tokenFb,
+                page_id=fbPageID
+            )
+
+
             docResult = create_google_doc_for_event(
                 event_id=clean_event_id,
                 owner_id=user_id,
@@ -82,7 +97,8 @@ class Runner:
                 f"**Media:** {createMediaRes}\n\n",
                 f"**Documentation:** {docResult}\n\n",
                 f"**Scheduling:** {calendarResult}\n\n",
-                f"**Tasks:** {tasksSaveRes}"
+                f"**Tasks:** {tasksSaveRes}\n\n",
+                f"**FB status:** {fb_status}",
             ]
 
             for chunk in results_stream:
@@ -91,6 +107,9 @@ class Runner:
 
         except Exception as e:
             error_message = f"Critical Mock Execution Error: {str(e)}"
+            event_to_remove = Projects.objects(id=clean_event_id).first()
+            if event_to_remove:
+                event_to_remove.delete()
             print(error_message)
             yield MockEvent(error_message)
 

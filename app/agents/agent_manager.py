@@ -112,7 +112,7 @@ class EventAgentsManager:
             self.stream_handler_agent = None
             self.main_agent = None
 
-    def run_agent(self, agent_to_use, prompt: str, user_id: str = "user_default") -> str:
+    def run_agent(self, agent_to_use, prompt: str,fbPageID: str = None, user_id: str = "user_default") -> str:
         """Utility to run an agent via the official ADK Runner sync interface."""
         if not self.main_agent or not self.runner:
             return "Error: Agents not initialized."
@@ -143,6 +143,7 @@ class EventAgentsManager:
                     # Async execution allows us to properly catch API exceptions
                     async for event in target_runner.run_async(
                         user_id=user_id,
+                        fbPageID = fbPageID,
                         session_id=f"stateless_{attempt}",
                         new_message=content
                     ):

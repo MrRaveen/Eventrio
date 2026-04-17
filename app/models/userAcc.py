@@ -37,7 +37,11 @@ class UserSpecificData(EmbeddedDocument):
     averageEventCountExcepected = IntField(default=0)
     toolStack = ListField(StringField(choices=[e.value for e in toolStackEnum]))
     mainObjectiveOfUser = ListField(StringField(choices=[e.value for e in ObjectiveEnum]))
-
+class socialMediaTokens(EmbeddedDocument):
+    facebook = StringField(default="")
+    linkedIn = StringField(default="")
+    pinterest = StringField(default="")
+    youtube = StringField(default="")
 class userAcc(Document):
     meta = {'collection': 'users'}
     sub = StringField(required=True, unique=True)
@@ -52,4 +56,7 @@ class userAcc(Document):
     payments = EmbeddedDocumentField(PaymentInfo, default=PaymentInfo)
     limits = EmbeddedDocumentField(Limits, default=Limits)
     userSpecificData = EmbeddedDocumentField(UserSpecificData, default=UserSpecificData)
+    socialMediaTokens = EmbeddedDocumentField(socialMediaTokens, default=lambda: socialMediaTokens())
     oauthToken = DictField()
+
+

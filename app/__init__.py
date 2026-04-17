@@ -1,5 +1,6 @@
 from app.models.organizations import Organizations
 import os
+import cloudinary
 from bson import ObjectId
 app_status = os.getenv('APP_STATUS')
 if app_status == "Development":
@@ -9,6 +10,11 @@ from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 def create_app():
+    cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+    )
     app = Flask(__name__, template_folder='templates', static_folder='static')
     app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
@@ -36,10 +42,14 @@ def create_app():
     from app.routes.ui.UIEndpoints import ui_endpoints
     from app.routes.backend.mainDashboard import main_dashboard
     from app.routes.backend.customerUi import customer_ui
+    from app.routes.backend.eventUiRoutes import event_ui_routes
+    from app.routes.ui.socialSetupRoutes import social_setups
     oauth.init_app(app)
     app.register_blueprint(ui_endpoints)
     app.register_blueprint(auth_login)
     app.register_blueprint(payment,url_prefix='/payment')
     app.register_blueprint(main_dashboard,url_prefix='/main-dashboard')
     app.register_blueprint(customer_ui, url_prefix='/customer')
+    app.register_blueprint(event_ui_routes,url_prefix="/event-ui")
+    app.register_blueprint(social_setups)
     return app

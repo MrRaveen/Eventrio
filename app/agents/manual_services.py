@@ -1,8 +1,10 @@
+import cloudinary
 from app.models.projects import Projects
 from app.models.userAcc import userAcc
 import uuid
 import requests
 import json
+import io
 from urllib.parse import quote
 
 #create the event in the DB
@@ -17,7 +19,9 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
         name=name,
         description=description,
         orgID=org_id,
-        ownerID=owner_id
+        ownerID=owner_id,
+        industry=["IT"],
+        userRole=["manager"]
     )
     if start_time:
         project.startDate = start_time
@@ -30,20 +34,42 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
     # return f"Successfully created event '{name}' with ID: {str(project.id)}."
     return f"{str(project.id)}"
 
-#create the media images
+#create media
 def generate_media_for_event(event_id: str, script_context: str) -> str:
     """Creates real media assets and links them to an event."""
+    import requests
+    import cloudinary
+    import cloudinary.uploader
+    from urllib.parse import quote
+    import io
     project = Projects.objects(id=event_id).first()
     if not project:
         return f"Error: Event {event_id} not found."
-    # Generate a real image URL via Pollinations
     safe_prompt = quote(f"{project.name} {script_context[:100]} professional event cover art")
-    image_url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1280&height=720&nologo=true"
-    # Generate a real functional viewable text file using Data URIs for the script
+    image_url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=1280&height=720&nologo=true&model=flux"
+    try:
+        response = requests.get(image_url, timeout=15)
+        if response.status_code == 200:
+            image_bytes = response.content
+            image_stream = io.BytesIO(image_bytes)
+            try:
+                upload_result = cloudinary.uploader.upload(
+                    image_stream,
+                    folder="eventrio_media"
+                )
+                final_cloudinary_url = upload_result.get('secure_url')
+                project.mediaLinks = [final_cloudinary_url]
+            except Exception as upload_error:
+                print(f"Cloudinary upload failed: {upload_error}")
+                project.mediaLinks = [image_url]
+        else:
+            project.mediaLinks = [image_url]
+    except requests.exceptions.RequestException as req_error:
+        print(f"Failed to fetch image from Pollinations: {req_error}")
+        project.mediaLinks = [image_url]
     safe_script = quote(script_context)
     script_url = f"data:text/plain;charset=utf-8,{safe_script}"
     project.scriptLink = script_url
-    project.mediaLinks = [image_url]
     project.save()
     return f"Media generated and linked to event {event_id} (Image & Script ready)."
 
@@ -71,6 +97,44 @@ def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) ->
     res2 = requests.post(f"https://docs.googleapis.com/v1/documents/{doc_id}:batchUpdate", headers=headers, json=insert_req)
     doc_link = f"https://docs.google.com/document/d/{doc_id}/edit"
     return f"Successfully created your Google Doc: {doc_link}"
+
+#post fb posts
+def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
+    if page_id:
+        #Get the Page Access Token 
+        accounts_url = f"https://graph.facebook.com/v19.0/me/accounts?access_token={user_token}"
+        try:
+            accounts_data = requests.get(accounts_url).json()
+        except:
+            return "Failed: Could not reach Facebook API."
+        
+        page_token = None
+        for page in accounts_data.get('data', []):
+            if page.get('id') == page_id:
+                page_token = page.get('access_token')
+                break
+                
+        if not page_token:
+            return "Failed: Page not found or permissions missing."
+
+        #Publish the Photo to the Page (Note the /photos endpoint)
+        post_url = f"https://graph.facebook.com/v19.0/{page_id}/photos"
+
+        if image_url:
+            payload = {
+                'message': message,
+                'url': image_url,
+                'access_token': page_token
+            }
+            try:
+                response = requests.post(post_url, data=payload)
+                return str(response.json())
+            except Exception as e:
+                return f"Failed to post: {str(e)}"
+        else:
+            return "Failed: You must provide either an image_url or a local_image_path."
+    else:
+        return "Skipped FB publishing (No Page Selected)"    
 
 #create the google calendar part
 def schedule_real_google_calendar(owner_id: str, event_name: str, start_time: str, end_time: str) -> str:

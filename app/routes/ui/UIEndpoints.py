@@ -110,6 +110,7 @@ def ai_planner():
 
 @ui_endpoints.route('/event-dashboard/<string:event_id>')
 def event_dashboard(event_id):
+    tab = request.args.get('tab', 'tasks')
     event = Projects.objects(id=event_id).first()
     if not event:
         return "Event not found", 404
@@ -117,7 +118,7 @@ def event_dashboard(event_id):
     if event.scriptLink and event.scriptLink.startswith("data:text/plain"):
         raw_encoded = event.scriptLink.split(",", 1)[-1]
         script_text = unquote(raw_encoded)
-    return render_template('event_dashboard.html', event=event, script_text=script_text)
+    return render_template('event_dashboard.html', event=event, script_text=script_text, active_tab=tab)
 
 @ui_endpoints.route('/browse-events')
 def browse_events():
