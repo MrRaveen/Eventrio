@@ -5,7 +5,10 @@ import uuid
 import requests
 import json
 import io
+import os
+import tempfile
 from urllib.parse import quote
+from mdtopptx import parse_markdown, create_ppt
 
 #create the event in the DB
 def create_event(name: str, description: str, org_id: str, owner_id: str, start_time: str = None, end_time: str = None) -> str:
@@ -194,6 +197,56 @@ def schedule_real_google_calendar(owner_id: str, event_name: str, start_time: st
     event_link = res.json().get('htmlLink')
     return f"Successfully scheduled Event in your calendar! Link: {event_link}"
 
+#create slides using the markdown
+def create_slides(markdown_text: str):
+    if not markdown_text:
+        return {"link": None, "error": "Markdown text is empty."}
+    
+    temp_path = None
+    try:
+        parsed_slides = parse_markdown(markdown_text)
+        if not parsed_slides:
+            return {"link": None, "error": "Failed to parse markdown slides."}
+    except Exception as e:
+        return {"link": None, "error": f"Error parsing markdown: {str(e)}"}
+
+    try:
+        #Create the temporary path
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pptx') as temp_file:
+            temp_path = temp_file.name
+
+        #Generate the file to the temporary disk path
+        create_ppt(parsed_slides, temp_path)
+
+        #Read the file into a Python variable
+        with open(temp_path, 'rb') as f:
+            pptx_memory_file = io.BytesIO(f.read())
+            
+        #Reset the stream position so it can be read by other functions
+        pptx_memory_file.seek(0)
+        #upload the file to cloud
+        upload_result = cloudinary.uploader.upload(
+            pptx_memory_file,
+            folder="eventrio_media",
+            resource_type="raw",
+            format="pptx",                   
+            public_id="eventrio_presentation"
+        )
+        final_cloudinary_url = upload_result.get('secure_url')
+        if not final_cloudinary_url:
+            return {"link": None, "error": "Cloudinary upload failed to return a URL."}
+            
+        return {"link": final_cloudinary_url, "error": None}
+
+    except Exception as e:
+        print(f"Slide creation failed: {e}")
+        return {"link": None, "error": f"Slide generation or upload failed: {str(e)}"}
+
+    finally:
+        #Clean up the disk
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
+
 #save tasks to DB
 def save_tasks_to_db(owner_id: str, event_id: str, tasks_data_json: str) -> str:
     project = Projects.objects(id=event_id).first()
@@ -224,4 +277,8 @@ def save_tasks_to_db(owner_id: str, event_id: str, tasks_data_json: str) -> str:
     project.tasks.extend(new_tasks)
     project.save()
     return f"Successfully saved {len(new_tasks)} tasks to MongoDB."
+
+
+
+
 

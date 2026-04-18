@@ -1,3 +1,4 @@
+from app.agents.manual_services import create_slides
 from app.agents.manual_services import automate_google_meet
 from app.models.posts import Posts
 from app.agents.manual_services import post_image_to_facebook_page
@@ -68,6 +69,18 @@ class Runner:
             currentProject = Projects.objects(id=clean_event_id).first()
             media = currentProject.mediaLinks[0] if currentProject and currentProject.mediaLinks else None
 
+            #create slides
+            slide_result = create_slides(
+                markdown_text=os.getenv('TEST_MOCK_SLIDESHOW_MD')
+            )
+            if isinstance(slide_result, dict) and slide_result.get('link'):
+                currentProject.slideShowLink = slide_result['link']
+                try:
+                    currentProject.save()
+                except Exception as db_e:
+                    print(f"Error saving Slide Show Link to Project: {db_e}")
+            elif isinstance(slide_result, dict) and slide_result.get('error'):
+                print(f"Slide Creation Error: {slide_result['error']}")
 
             #create the google meet event safely
             accessToken = None

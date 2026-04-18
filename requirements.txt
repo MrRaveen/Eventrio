@@ -24,3 +24,5 @@ stripe
 pydantic
 resend
 redis
+mdtopptx
+python-pptx

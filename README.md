@@ -1,76 +1,153 @@
-- basic context
-```
-"Eventrio is an advanced, AI-driven event planning and management platform designed to automate the complexities of organizing events from conception to execution. Developed with a Python and Flask backend and a MongoDB database, the application features a sophisticated AI Planner that orchestrates specialized agents—including a Planning Agent, Media Agent, and Social Media Agent—to handle tasks such as event creation, task scheduling, promotional content generation, and media asset production. By integrating with powerful tools like the Google GenAI SDK, Google Calendar, and Google Docs, Eventrio provides a seamless workflow for users to autonomously manage events, track progress through interactive dashboards, and engage with real-time AI assistance, ultimately transforming how professional and personal events are orchestrated. "
+# Eventrio 🚀
 
-read above paragraph and prepare to answer my questions. do not try to impress me. just tell me the truth.
-```
-- python setup process
-```
- pip install -r requirements.txt
- source venv/bin/activate
-```
+**The Future of AI-Driven Event Orchestration.**
 
-- stripe setup part
-```
-stripe --version
+Eventrio is an advanced, AI-driven event planning and management platform designed to automate the complexities of organizing events from conception to execution. Whether you're planning a corporate summit or a personal celebration, Eventrio orchestrates specialized AI agents to handle the heavy lifting, allowing you to focus on the experience.
 
+---
+
+## ✨ Features for Everyone
+
+Eventrio simplifies event management through intelligent automation:
+
+*   **🤖 AI Planner**: Just describe your event, and our AI agents will create a complete plan, schedule tasks, and generate professional content.
+*   **🖼️ Instant Media Generation**: Automatically create professional cover art and promotional images tailored to your event's theme.
+*   **📝 Professional Scripting**: Get custom announcer scripts and presentation outlines generated for your keynote speakers.
+*   **📅 Seamless Scheduling**: Automated integration with Google Calendar and Google Meet for all your sessions and links.
+*   **📊 Interactive Dashboard**: A professional, JIRA-inspired workspace to track tasks, view calendars, and manage media assets.
+*   **📱 Social Engagement**: Connect your Facebook pages and post AI-generated promotional content directly from the app.
+
+---
+
+## 📸 Guided Walkthrough
+
+````carousel
+![Starting Page](image.png)
+<!-- slide -->
+![Professional Login](image-1.png)
+<!-- slide -->
+![Central Dashboard](image-2.png)
+<!-- slide -->
+![Organization Management](image-3.png)
+<!-- slide -->
+![Social Media Integration](image-4.png)
+<!-- slide -->
+![AI-Powered Event Creation](image-5.png)
+<!-- slide -->
+![Intelligent Task Generation](image-6.png)
+<!-- slide -->
+![Event Planning Progress](image-7.png)
+<!-- slide -->
+![Browse Events View](image-8.png)
+<!-- slide -->
+![Task Management](image-9.png)
+<!-- slide -->
+![Dynamic Calendar](image-10.png)
+<!-- slide -->
+![Generated Media Assets](image-11.png)
+<!-- slide -->
+![Announcer Scripts](image-12.png)
+<!-- slide -->
+![Google Meet Integration](image-13.png)
+<!-- slide -->
+![Professional Slideshows (PPTX)](image-14.png)
+````
+
+---
+
+## 🛠️ Technical Stack
+
+*   **Backend**: Python, Flask
+*   **Database**: MongoDB (MongoEngine)
+*   **Cache/Queue**: Redis
+*   **AI Engine**: Google GenAI SDK (Gemini)
+*   **Payments**: Stripe
+*   **Cloud Storage**: Cloudinary
+*   **Integrations**: Google Workspace (Docs, Calendar), Facebook Graph API
+
+---
+
+## 🚀 Installation & Setup
+
+### Prerequisites
+*   Python 3.8+
+*   MongoDB Atlas or local instance
+*   Redis server
+*   Stripe CLI (for local webhook testing)
+
+### Step-by-Step Installation
+
+1.  **Clone the Repository**
+    ```bash
+    git clone <repository-url>
+    cd eventrio
+    ```
+
+2.  **Environment Setup**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # Linux/macOS
+    # .\venv\Scripts\activate  # Windows
+    ```
+
+3.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+4.  **Configuration**
+    Create a `.env` file in the root directory and add the following keys:
+    ```env
+    MONGO_URI=your_mongodb_uri
+    CLOUDINARY_CLOUD_NAME=your_name
+    CLOUDINARY_API_KEY=your_key
+    CLOUDINARY_API_SECRET=your_secret
+    REDIS_HOST=localhost
+    REDIS_PORT=6379
+    GOOGLE_OAUTH_CLIENT_ID=your_id
+    GOOGLE_OAUTH_CLIENT_SECRET=your_secret
+    STRIPE_API_KEY=your_key
+    STRIPE_WEBHOOK_SECRET=your_secret
+    ```
+
+5.  **Run the Application**
+    ```bash
+    python run.py
+    ```
+
+### Stripe Webhook Setup
+To test payments locally:
+```bash
 stripe login
-
-sudo systemctl restart systemd-resolved
-
-stripe login
-Your pairing code is: honest-warmth-gold-evenly
-
 stripe listen --forward-to localhost:5000/payment/webhook
 ```
 
-- Coding notes 
-- Creating a document
-```
-new_org = Organizations(
-            orgName=validatedJson.orgName,
-            address=validatedJson.address,
-            createdBy=user_id,
-            industry=[validatedJson.industry.value],
-            userRole=[validatedJson.userRole.value]
-        )
-        new_org.save()
-```
+---
 
-- Getting a document
-```
-user = userAcc.objects(sub=user_id).first()
-```
+## 🗺️ Roadmap
 
-- deleting a document
-```
-user = userAcc.objects(sub=user_id).first()
-if user:
-    user.delete()
-```
+- [ ] **Multi-Platform Posting**: Adding LinkedIn and Pinterest automation.
+- [ ] **Advanced Analytics**: Real-time attendee engagement tracking.
+- [ ] **Custom AI Personalities**: Tailor the AI agent's tone to your brand.
+- [ ] **Mobile App**: Native iOS and Android companions for on-the-go management.
 
-- deleting a bunch of documents
-``` 
-Organizations.objects(status='inactive').delete()
-```
+---
 
+## 🤝 Contribution Guidelines
 
-```
-import requests
+We welcome contributions! To contribute:
+1.  **Fork** the repository.
+2.  **Create a feature branch** (`git checkout -b feature/AmazingFeature`).
+3.  **Commit your changes** (`git commit -m 'Add some AmazingFeature'`).
+4.  **Push to the branch** (`git push origin feature/AmazingFeature`).
+5.  **Open a Pull Request**.
 
-def delete_facebook_post(page_token, post_id):
-    """
-    Deletes a specific post from a Facebook Page.
-    """
-    delete_url = f"https://graph.facebook.com/v19.0/{post_id}"
-    
-    # Pass the token as a query parameter for DELETE requests
-    payload = {
-        'access_token': page_token
-    }
-    
-    response = requests.delete(delete_url, params=payload)
-    
-    # A successful deletion returns {"success": true}
-    return response.json()
-```
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. See `LICENSE` for more information.
+
+---
+
+*Designed with ❤️ for the GenAI Hackathon.*

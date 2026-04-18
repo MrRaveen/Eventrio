@@ -1,0 +1,28 @@
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 w-full">
+    <div class="flex justify-between items-center mb-6">
+        <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm flex items-center gap-2">
+            <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            Generated Presentation
+        </h3>
+        <button onclick="downloadMedia('{{ event.slideShowLink }}', 'presentation.pptx')"
+            class="px-4 py-2 bg-brand-600 text-white hover:bg-brand-700 font-bold text-sm rounded-lg shadow-sm hover:shadow-brand-500/30 transition-all flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            Download PPTX
+        </button>
+    </div>
+    
+    <div class="w-full bg-slate-50 rounded-xl border border-slate-200 overflow-hidden" style="height: 600px;">
+        <iframe 
+            src="https://view.officeapps.live.com/op/embed.aspx?src={{ event.slideShowLink | urlencode }}" 
+            width="100%" 
+            height="100%" 
+            frameborder="0"
+            title="Presentation Slideshow">
+        </iframe>
+    </div>
+</div>

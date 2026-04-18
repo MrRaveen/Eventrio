@@ -167,6 +167,21 @@ def remove_org(org_id):
                             except Exception as cloud_e:
                                 print(f"Cloudinary deletion failed for {imgUrl}: {cloud_e}")
 
+                    # Deleting slideshow (pptx)
+                    if hasattr(fo, 'slideShowLink') and fo.slideShowLink:
+                        try:
+                            slideUrl = fo.slideShowLink
+                            path = urlparse(slideUrl).path
+                            if '/upload/' in path:
+                                parts = path.split('/upload/')[-1].split('/')
+                                if parts[0].startswith('v') and parts[0][1:].isdigit():
+                                    parts.pop(0)
+                                public_id_with_ext = '/'.join(parts)
+                                public_id = public_id_with_ext.rsplit('.', 1)[0]
+                                cloudinary.uploader.destroy(public_id, resource_type="raw")
+                        except Exception as cloud_e:
+                            print(f"Cloudinary deletion failed for slideshow {fo.slideShowLink}: {cloud_e}")
+                                
                 allPosts = Posts.objects(orgID=org_id)
                 if fbToken:
                     for post in allPosts:
