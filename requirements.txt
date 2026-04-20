@@ -26,3 +26,4 @@ resend
 redis
 mdtopptx
 python-pptx
+mailjet-rest

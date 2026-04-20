@@ -67,11 +67,22 @@
             <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='slideshow') }}"
                 class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'slideshow' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
                 <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 <span class="text-[10px] lg:text-sm text-center lg:text-left">Slideshow</span>
             </a>
             {% endif %}
+            <!-- Contributors -->
+            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='contributors') }}"
+                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'contributors' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                    </path>
+                </svg>
+                <span class="text-[10px] lg:text-sm text-center lg:text-left">Contributors</span>
+            </a>
             <!-- Back to Dash -->
             <div class="pt-6 mt-6 border-t border-slate-100">
                 <a href="{{ url_for('ui_endpoints.dashboard') }}"
@@ -265,11 +276,14 @@
             {% include 'components/slideshow.html' %}
 
             {% elif active_tab == 'meeting' and event.meetingUrl %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 text-center space-y-4 py-12 flex flex-col items-center">
+            <div
+                class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 text-center space-y-4 py-12 flex flex-col items-center">
                 <h3 class="font-bold text-slate-800 uppercase tracking-wider text-xl mb-2">Google Meet Details</h3>
-                <p class="text-slate-500 mb-6 w-full max-w-lg mx-auto">This event has a designated online meeting room ready for attendees. Click below to join.</p>
-                
-                <div class="inline-flex flex-col items-center justify-center p-8 mt-4 bg-slate-50 border border-slate-200 rounded-xl w-full max-w-md mx-auto">
+                <p class="text-slate-500 mb-6 w-full max-w-lg mx-auto">This event has a designated online meeting room
+                    ready for attendees. Click below to join.</p>
+
+                <div
+                    class="inline-flex flex-col items-center justify-center p-8 mt-4 bg-slate-50 border border-slate-200 rounded-xl w-full max-w-md mx-auto">
                     <div class="bg-brand-100 text-brand-600 p-4 rounded-full mb-6 relative shadow-inner">
                         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -277,10 +291,13 @@
                             </path>
                         </svg>
                     </div>
-                    
-                    <span class="text-slate-500 font-mono text-xs uppercase tracking-widest font-bold mb-2">Meeting Link</span>
-                    <a href="{{ event.meetingUrl }}" target="_blank" class="text-brand-600 hover:text-brand-700 font-mono text-sm mb-8 break-all transition-colors">{{ event.meetingUrl }}</a>
-                    
+
+                    <span class="text-slate-500 font-mono text-xs uppercase tracking-widest font-bold mb-2">Meeting
+                        Link</span>
+                    <a href="{{ event.meetingUrl }}" target="_blank"
+                        class="text-brand-600 hover:text-brand-700 font-mono text-sm mb-8 break-all transition-colors">{{
+                        event.meetingUrl }}</a>
+
                     <a href="{{ event.meetingUrl }}" target="_blank"
                         class="px-8 py-3.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/30 flex items-center gap-3">
                         Join Meeting Now
@@ -292,10 +309,146 @@
                     </a>
                 </div>
             </div>
+
+            {% elif active_tab == 'contributors' %}
+            <div class="space-y-6">
+                <!-- Header -->
+                <div
+                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h3 class="text-xl font-bold text-slate-900">Event Contributors</h3>
+                        <p class="text-slate-500 text-sm">Manage team members and their roles for this event.</p>
+                    </div>
+                    <button onclick="openInviteModal()"
+                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-md shadow-brand-200">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        Invite Contributor
+                    </button>
+                </div>
+
+                <!-- Contributors List -->
+                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200">
+                                    <th
+                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        Contributor</th>
+                                    <th
+                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        Role</th>
+                                    <th
+                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                        Status</th>
+                                    <th
+                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contributorsList" class="divide-y divide-slate-100">
+                                <!-- Loaded via JS -->
+                                <tr>
+                                    <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600">
+                                            </div>
+                                            Loading contributors...
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             {% endif %}
         </div>
     </main>
 
+    <!-- Invite Contributor Modal -->
+    <div id="inviteModal"
+        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800">Invite Contributor</h3>
+                <button onclick="closeInviteModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="inviteForm" onsubmit="submitInvitation(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Email
+                        Address</label>
+                    <input type="email" name="targetEmail" required placeholder="example@gmail.com"
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
+                    <select name="roleName" id="roleSelect" required
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                        <!-- Options loaded via JS -->
+                    </select>
+                </div>
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
+                        <span>Send Invitation</span>
+                        <div id="inviteSpinner"
+                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Role Modal -->
+    <div id="editRoleModal"
+        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-xl font-bold text-slate-800">Update Contributor Role</h3>
+                <button onclick="closeEditRoleModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <form id="editRoleForm" onsubmit="submitRoleUpdate(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editDocID">
+                <div>
+                    <label
+                        class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Contributor</label>
+                    <div id="editTargetEmail"
+                        class="w-full px-4 py-3 bg-slate-100 text-slate-500 rounded-lg font-medium"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
+                    <select name="roleName" id="editRoleSelect" required
+                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                        <!-- Options loaded via JS -->
+                    </select>
+                </div>
+                <div class="pt-4">
+                    <button type="submit"
+                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
+                        <span>Update Role</span>
+                        <div id="editSpinner"
+                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
+                        </div>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}
 {% block scripts %}
@@ -327,7 +480,7 @@
                     {% endif %}
                 ]
             });
-            calendar.render();
+    calendar.render();
         }
     });
 
@@ -375,6 +528,173 @@
                 // Fallback: open in new tab
                 window.open(url, '_blank');
             });
+    }
+
+    // Contributors Logic
+    const eventID = "{{ event.id }}";
+    const orgID = "{{ event.orgID }}";
+    const activeTab = "{{ active_tab }}";
+
+    if (activeTab === 'contributors') {
+        loadContributors();
+        loadRoles();
+    }
+
+    async function loadRoles() {
+        try {
+            const response = await fetch('/event-ui/get-roles');
+            const result = await response.json();
+            if (result.message === 'Success') {
+                const selects = ['roleSelect', 'editRoleSelect'];
+                selects.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = result.data.map(role => `<option value="${role}">${role}</option>`).join('');
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading roles:', error);
+        }
+    }
+
+    async function loadContributors() {
+        const listContainer = document.getElementById('contributorsList');
+        try {
+            const response = await fetch(`/event-ui/view-contributors/${eventID}`);
+            const result = await response.json();
+
+            if (result.message === 'Success') {
+                if (result.data.length === 0) {
+                    listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors found.</td></tr>';
+                    return;
+                }
+
+                listContainer.innerHTML = result.data.map(c => `
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-8 w-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
+                                    ${(c.targetEmail || '?')[0].toUpperCase()}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-slate-700">${c.targetEmail || 'N/A'}</span>
+                                    <span class="text-[10px] text-slate-400 uppercase tracking-tighter">${c.userAccountID || 'Pending Registration'}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 bg-brand-50 text-brand-600 text-[10px] font-bold rounded-full uppercase tracking-wider border border-brand-100">
+                                ${c.role || 'Member'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="h-1.5 w-1.5 rounded-full ${c.accept_stat === true ? 'bg-emerald-500' : 'bg-amber-400'}"></div>
+                                <span class="text-xs ${c.accept_stat === true ? 'text-emerald-600' : 'text-amber-600'} font-medium">
+                                    ${c.accept_stat === true ? 'Accepted' : 'Pending'}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button onclick="openEditRoleModal('${c.id}', '${c.targetEmail || ''}', '${c.role || ''}')" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else if (result.message === 'Not Found') {
+                listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors have been added yet.</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error loading contributors:', error);
+            listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-red-500 italic">Failed to load contributors.</td></tr>';
+        }
+    }
+
+    function openInviteModal() {
+        document.getElementById('inviteModal').classList.remove('hidden');
+    }
+
+    function closeInviteModal() {
+        document.getElementById('inviteModal').classList.add('hidden');
+        document.getElementById('inviteForm').reset();
+    }
+
+    async function submitInvitation(event) {
+        event.preventDefault();
+        const spinner = document.getElementById('inviteSpinner');
+        spinner.classList.remove('hidden');
+
+        const formData = new FormData(event.target);
+        const data = {
+            eventID: eventID,
+            orgID: orgID,
+            targetEmail: formData.get('targetEmail'),
+            roleName: formData.get('roleName')
+        };
+
+        try {
+            const response = await fetch('/event-ui/send-invitation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                Swal.fire({ title: 'Success!', text: 'Invitation sent successfully.', icon: 'success' });
+                closeInviteModal();
+                loadContributors();
+            } else {
+                Swal.fire({ title: 'Error', text: result.data || 'Failed to send invitation.', icon: 'error' });
+            }
+        } catch (error) {
+            Swal.fire({ title: 'Error', text: 'An unexpected error occurred.', icon: 'error' });
+        } finally {
+            spinner.classList.add('hidden');
+        }
+    }
+
+    function openEditRoleModal(docID, email, currentRole) {
+        document.getElementById('editDocID').value = docID;
+        document.getElementById('editTargetEmail').innerText = email;
+        document.getElementById('editRoleSelect').value = currentRole;
+        document.getElementById('editRoleModal').classList.remove('hidden');
+    }
+
+    function closeEditRoleModal() {
+        document.getElementById('editRoleModal').classList.add('hidden');
+    }
+
+    async function submitRoleUpdate(event) {
+        event.preventDefault();
+        const spinner = document.getElementById('editSpinner');
+        spinner.classList.remove('hidden');
+
+        const docID = document.getElementById('editDocID').value;
+        const roleName = document.getElementById('editRoleSelect').value;
+
+        try {
+            const response = await fetch(`/event-ui/update-contributor-role/${docID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roleName: roleName })
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                Swal.fire({ title: 'Updated!', text: 'Contributor role updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                closeEditRoleModal();
+                loadContributors();
+            } else {
+                Swal.fire({ title: 'Error', text: result.data || 'Failed to update role.', icon: 'error' });
+            }
+        } catch (error) {
+            Swal.fire({ title: 'Error', text: 'An unexpected error occurred.', icon: 'error' });
+        } finally {
+            spinner.classList.add('hidden');
+        }
     }
 </script>
 {% endblock %}

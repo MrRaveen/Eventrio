@@ -54,7 +54,12 @@ if user:
 Organizations.objects(status='inactive').delete()
 ```
 
+- checking the existance
+```
+exists = userAcc.objects(sub=user_id).count() > 0
+```
 
+- remove facebook post
 ```
 import requests
 
