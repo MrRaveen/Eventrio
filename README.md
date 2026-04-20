@@ -21,7 +21,6 @@ Eventrio simplifies event management through intelligent automation:
 
 ## 📸 Guided Walkthrough
 
-````carousel
 ![Starting Page](image.png)
 <!-- slide -->
 ![Professional Login](image-1.png)
@@ -51,7 +50,7 @@ Eventrio simplifies event management through intelligent automation:
 ![Google Meet Integration](image-13.png)
 <!-- slide -->
 ![Professional Slideshows (PPTX)](image-14.png)
-````
+
 
 ---
 
