@@ -1,3 +1,7 @@
+from datetime import datetime, timezone
+from app.responseDto.getEventsForAdminRes import getEventsForAdminRes
+from app.responseDto.allCollabsRes import allCollabsRes
+from app.models.contributors import contributors
 from app.models.participants import Participants
 from app.models.posts import Posts
 from app.requestsDto.createOrgReq import createOrgReq
@@ -343,6 +347,167 @@ def get_fb_pages():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+#get collabs
+@main_dashboard.route('/get-collabs', methods=['GET'])
+def getCollabs():
+    try:
+        user_email = session.get('user_email')
+        if not user_email:
+            return jsonify({
+                "message": "Unauthorized", 
+                "data": "User email not found in session."
+            }), 401
 
+        allCollabs = contributors.objects(targetEmail=user_email)
+        response_list = []
+
+        for col in allCollabs:
+            project = Projects.objects(id=col.eventID).first()
+            
+            # Skip iterations where referenced entities might have been deleted
+            if not project:
+                continue
+
+            org = Organizations.objects(id=project.orgID).first()
+            ownerInfo = userAcc.objects(sub=project.ownerID).first()
+
+            # Map to Pydantic model
+            collab_data = allCollabsRes(
+                docID=str(col.id),
+                projectName=project.name,
+                projectDes=project.description or "",
+                startDate=project.startDate,
+                endDate=project.endDate,
+                ownerName=ownerInfo.displayName if ownerInfo else "Unknown Owner",
+                orgname=org.orgName if org else "Unknown Organization",
+                accept_stat=col.accept_stat,
+                eventID=col.eventID,
+                orgID=col.orgID,
+                role=col.role or "Unassigned"
+            )
+            
+            # .model_dump() is for Pydantic V2. Use .dict() if using Pydantic V1.
+            response_list.append(collab_data.model_dump())
+
+        return jsonify({
+            "message": "Success", 
+            "data": response_list
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "message": "Internal Server Error", 
+            "data": str(e)
+        }), 500
+
+#accept request
+@main_dashboard.route('/accept-collab/<string:docID>', methods=['PUT'])
+def acceptCollab(docID):
+    try:
+        if not docID or not docID.strip():
+            return jsonify({
+                "message": "Validation Error", 
+                "data": "Document ID is required."
+            }), 400
+
+        collab = contributors.objects(id=docID.strip()).first()
+
+        if not collab:
+            return jsonify({
+                "message": "Not Found", 
+                "data": "Collaboration record not found."
+            }), 404
+
+        if collab.accept_stat:
+            return jsonify({
+                "message": "Conflict", 
+                "data": "Collaboration is already accepted."
+            }), 409
+
+        # Update status
+        collab.accept_stat = True
+        
+        # Link user account ID since they are accepting via their logged-in session
+        user_id = session.get('user_id')
+        if user_id:
+            collab.userAccountID = user_id
+
+        collab.save()
+
+        return jsonify({
+            "message": "Success", 
+            "data": "Collaboration accepted successfully."
+        }), 200
+
+    except ValidationError:
+        return jsonify({
+            "message": "Validation Error", 
+            "data": "Invalid Document ID format."
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "message": "Internal Server Error", 
+            "data": str(e)
+        }), 500
+
+#dashboard insights
+#get all events
+@main_dashboard.route('/get-list-events', methods=['GET'])
+def getListEvents():
+    try:
+        user_id = session.get('user_id')
+        
+        if not user_id:
+            return jsonify({
+                "message": "Unauthorized",
+                "data": "User session not found."
+            }), 401
+
+        allProjects = Projects.objects(ownerID=user_id)
+        response_list = []
+
+        now = datetime.now(timezone.utc)
+        for project in allProjects:
+            # Fetch organization to get the organizationName
+            org = Organizations.objects(id=project.orgID).first()
+            org_name = org.orgName if org else "Unknown Organization"
+
+            # Determine status
+            project_end = project.endDate if project.endDate else project.startDate
+            # Ensure project_end is timezone-aware for comparison
+            if project_end and project_end.tzinfo is None:
+                project_end = project_end.replace(tzinfo=timezone.utc)
+            
+            if project_end and now > project_end:
+                status = "COMPLETED"
+            elif project.isEventStarted:
+                status = "LIVE"
+            else:
+                status = "PLANNING"
+
+            # Map the database object to the Pydantic response class
+            event_res = getEventsForAdminRes(
+                eventDocID=str(project.id),
+                eventName=project.name,
+                isEventStarted=project.isEventStarted,
+                organizationID=str(project.orgID) if project.orgID else "Unknown",
+                organizationName=org_name,
+                startDate=project.startDate,
+                endDate=project.endDate if project.endDate else project.startDate,
+                eventStatus=status
+            )
+            
+            response_list.append(event_res.model_dump())
+
+        return jsonify({
+            "message": "Success",
+            "data": response_list
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "message": "Internal Server Error",
+            "data": str(e)
+        }), 500
 
 

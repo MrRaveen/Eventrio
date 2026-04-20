@@ -3,100 +3,7 @@
 <div class="flex h-screen w-full bg-slate-50 overflow-hidden text-slate-900 transition-colors duration-200">
 
     <!-- Sidebar -->
-    <aside
-        class="w-20 lg:w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300">
-        <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-200">
-            <span class="text-lg font-bold hidden lg:block text-brand-700">Event Dashboard</span>
-            <span class="text-xl font-bold lg:hidden text-brand-600">ED</span>
-        </div>
-        <nav class="flex-1 px-2 lg:px-3 py-6 space-y-1 overflow-y-auto w-full overflow-x-hidden">
-            <!-- Tasks -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='tasks') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'tasks' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Tasks</span>
-            </a>
-            <!-- Calendar -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='calendar') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'calendar' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Calendar</span>
-            </a>
-            <!-- Media post generation -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='media') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'media' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Media Generation</span>
-            </a>
-            <!-- Script -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='script') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'script' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Script</span>
-            </a>
-            {% if event.meetingUrl %}
-            <!-- Online Meeting -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='meeting') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'meeting' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Online Meeting</span>
-            </a>
-            {% endif %}
-            {% if event.slideShowLink %}
-            <!-- Slideshow -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='slideshow') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'slideshow' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Slideshow</span>
-            </a>
-            {% endif %}
-            <!-- Contributors -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='contributors') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'contributors' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Contributors</span>
-            </a>
-            <!-- Back to Dash -->
-            <div class="pt-6 mt-6 border-t border-slate-100">
-                <a href="{{ url_for('ui_endpoints.dashboard') }}"
-                    class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 text-slate-400 hover:text-brand-600 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 8.959 8.959 0 01-9 9 8.959 8.959 0 01-9-9z">
-                        </path>
-                    </svg>
-                    <span class="text-[10px] lg:text-sm font-medium">Dashboard</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
+    {% include 'components/dashboard/sidebar.html' %}
 
     <!-- Main Workspace -->
     <main class="flex-1 overflow-y-auto p-6 md:p-10">
@@ -121,341 +28,62 @@
 
             <!-- Dynamic Content Area -->
             {% if active_tab == 'tasks' %}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-8">
-                    <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                                </path>
-                            </svg>
-                            <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Generated Tasks</h3>
-                        </div>
-                        <div class="p-6">
-                            {% if event.tasks %}
-                            <ul class="divide-y divide-slate-100">
-                                {% for task in event.tasks %}
-                                <li class="py-4 first:pt-0 last:pb-0 group">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-slate-700 group-hover:text-brand-600 transition-colors">{{
-                                            task.title }}</span>
-                                        <div
-                                            class="text-[10px] text-slate-400 uppercase font-bold text-right flex flex-col">
-                                            {% if task.startDate %}<span>Start: {{ task.startDate|truncate(12, true, '')
-                                                }}</span>{% endif %}
-                                            {% if task.dueDate %}<span class="text-brand-500">Due: {{
-                                                task.dueDate|truncate(12, true, '') }}</span>{% endif %}
-                                        </div>
-                                    </div>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            <p class="text-slate-400 italic text-center py-4 text-sm">No tasks generated yet.</p>
-                            {% endif %}
-                        </div>
-                    </section>
-                </div>
-                <!-- Right Sidebar -->
-                <div class="space-y-8">
-                    <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <div class="p-6">
-                            <div
-                                class="flex items-center gap-3 mb-6 font-bold text-slate-800 uppercase tracking-wider text-sm">
-                                <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                                Schedule
-                            </div>
-                            <div class="space-y-6">
-                                <div>
-                                    <div class="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">
-                                        Starts</div>
-                                    <div class="text-md font-medium text-slate-700">
-                                        {% if event.startDate %}{{ event.startDate.strftime('%b %d, %Y %I:%M %p') }}{%
-                                        else %}TBD{% endif %}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">
-                                        Ends</div>
-                                    <div class="text-md font-medium text-slate-700">
-                                        {% if event.endDate %}{{ event.endDate.strftime('%b %d, %Y %I:%M %p') }}{% else
-                                        %}TBD{% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
-
+                {% include 'components/dashboard/tab_tasks.html' %}
             {% elif active_tab == 'calendar' %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Event Calendar</h3>
-                    <a href="https://calendar.google.com/calendar/u/0/r" target="_blank"
-                        class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-bold text-sm rounded-lg transition-all flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                        Open Google Calendar
-                    </a>
-                </div>
-                <div id="calendar" class="min-h-[500px]"></div>
-            </div>
-
+                {% include 'components/dashboard/tab_calendar.html' %}
             {% elif active_tab == 'media' %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
-                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm mb-6">Generated Media</h3>
-                {% if event.mediaLinks and event.mediaLinks|length > 0 %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {% for link in event.mediaLinks %}
-                    <div class="group relative rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                        <img src="{{ link }}" alt="Event Media"
-                            class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <button onclick="downloadMedia('{{ link }}', 'event_media_{{ loop.index }}.jpg')"
-                                class="px-4 py-2 bg-white text-brand-600 font-bold rounded-lg shadow-lg hover:bg-brand-50 transition-colors flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                                Download
-                            </button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-slate-400 italic text-center py-8">No media has been generated for this event yet.</p>
-                {% endif %}
-            </div>
-
+                {% include 'components/dashboard/tab_media.html' %}
             {% elif active_tab == 'script' %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Announcer Script</h3>
-                    <div class="flex gap-3">
-                        <button onclick="copyScript()"
-                            class="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold text-sm rounded-lg transition-all flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                            Copy Script
-                        </button>
-                        <a href="https://docs.google.com/document/u/0/" target="_blank"
-                            class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-bold text-sm rounded-lg transition-all flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                </path>
-                            </svg>
-                            Open Google Docs
-                        </a>
-                    </div>
-                </div>
-                {% if script_text %}
-                <div id="scriptContent"
-                    class="bg-slate-50 rounded-lg p-6 font-mono text-sm text-slate-700 leading-relaxed whitespace-pre-wrap border border-slate-200 min-h-[300px]">
-                    {{ script_text }}</div>
-                {% else %}
-                <p class="text-slate-400 italic text-center py-8">No script has been generated for this event yet.</p>
-                {% endif %}
-            </div>
-
+                {% include 'components/dashboard/tab_script.html' %}
             {% elif active_tab == 'slideshow' and event.slideShowLink %}
-            {% include 'components/slideshow.html' %}
-
+                {% include 'components/slideshow.html' %}
             {% elif active_tab == 'meeting' and event.meetingUrl %}
-            <div
-                class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 text-center space-y-4 py-12 flex flex-col items-center">
-                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-xl mb-2">Google Meet Details</h3>
-                <p class="text-slate-500 mb-6 w-full max-w-lg mx-auto">This event has a designated online meeting room
-                    ready for attendees. Click below to join.</p>
-
-                <div
-                    class="inline-flex flex-col items-center justify-center p-8 mt-4 bg-slate-50 border border-slate-200 rounded-xl w-full max-w-md mx-auto">
-                    <div class="bg-brand-100 text-brand-600 p-4 rounded-full mb-6 relative shadow-inner">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                    </div>
-
-                    <span class="text-slate-500 font-mono text-xs uppercase tracking-widest font-bold mb-2">Meeting
-                        Link</span>
-                    <a href="{{ event.meetingUrl }}" target="_blank"
-                        class="text-brand-600 hover:text-brand-700 font-mono text-sm mb-8 break-all transition-colors">{{
-                        event.meetingUrl }}</a>
-
-                    <a href="{{ event.meetingUrl }}" target="_blank"
-                        class="px-8 py-3.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/30 flex items-center gap-3">
-                        Join Meeting Now
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                            </path>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-
+                {% include 'components/dashboard/tab_meeting.html' %}
             {% elif active_tab == 'contributors' %}
-            <div class="space-y-6">
-                <!-- Header -->
-                <div
-                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900">Event Contributors</h3>
-                        <p class="text-slate-500 text-sm">Manage team members and their roles for this event.</p>
-                    </div>
-                    <button onclick="openInviteModal()"
-                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-md shadow-brand-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        Invite Contributor
-                    </button>
-                </div>
-
-                <!-- Contributors List -->
-                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Contributor</th>
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Role</th>
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Status</th>
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
-                                        Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="contributorsList" class="divide-y divide-slate-100">
-                                <!-- Loaded via JS -->
-                                <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">
-                                        <div class="flex flex-col items-center gap-3">
-                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600">
-                                            </div>
-                                            Loading contributors...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                {% include 'components/dashboard/tab_contributors.html' %}
             {% endif %}
         </div>
     </main>
 
-    <!-- Invite Contributor Modal -->
-    <div id="inviteModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800">Invite Contributor</h3>
-                <button onclick="closeInviteModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <form id="inviteForm" onsubmit="submitInvitation(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Email
-                        Address</label>
-                    <input type="email" name="targetEmail" required placeholder="example@gmail.com"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
-                    <select name="roleName" id="roleSelect" required
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
-                        <!-- Options loaded via JS -->
-                    </select>
-                </div>
-                <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
-                        <span>Send Invitation</span>
-                        <div id="inviteSpinner"
-                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
-                        </div>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Role Modal -->
-    <div id="editRoleModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800">Update Contributor Role</h3>
-                <button onclick="closeEditRoleModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <form id="editRoleForm" onsubmit="submitRoleUpdate(event)" class="p-6 space-y-4">
-                <input type="hidden" id="editDocID">
-                <div>
-                    <label
-                        class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Contributor</label>
-                    <div id="editTargetEmail"
-                        class="w-full px-4 py-3 bg-slate-100 text-slate-500 rounded-lg font-medium"></div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
-                    <select name="roleName" id="editRoleSelect" required
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
-                        <!-- Options loaded via JS -->
-                    </select>
-                </div>
-                <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
-                        <span>Update Role</span>
-                        <div id="editSpinner"
-                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
-                        </div>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+    <!-- Modals -->
+    {% include 'components/dashboard/modals.html' %}
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script>
+    /* =============================================
+     * Global Config
+     * ============================================= */
+    const eventID = "{{ event.id }}";
+    const orgID = "{{ event.orgID }}";
+    const activeTab = "{{ active_tab }}";
+
+    /* =============================================
+     * Task Data Map (clean server-side serialization)
+     * Eliminates broken HTML-attribute JSON parsing
+     * ============================================= */
+    const TASK_DATA = {
+        {% if event_tasks %}
+        {% for task in event_tasks %}
+        "{{ task.id }}": {
+            title: {{ task.title | tojson }},
+            description: {{ (task.description or '') | tojson }},
+            priority: {{ (task.priority.value if task.priority and task.priority is not string else (task.priority or 'medium')) | tojson }},
+            status: {{ (task.status.value if task.status and task.status is not string else (task.status or 'in progress')) | tojson }},
+            assigned_to: {{ (task.assigned_to or 'NONE') | tojson }},
+            startDate: {{ (task.startDate.isoformat() if task.startDate and task.startDate is not string else (task.startDate or '')) | tojson }},
+            deadline: {{ (task.deadline.isoformat() if task.deadline and task.deadline is not string else (task.deadline or '')) | tojson }}
+        },
+        {% endfor %}
+        {% endif %}
+    };
+
+    /* =============================================
+     * Calendar Module
+     * ============================================= */
     document.addEventListener('DOMContentLoaded', function () {
         const calendarEl = document.getElementById('calendar');
-
         if (calendarEl) {
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
@@ -467,35 +95,32 @@
                 themeSystem: 'standard',
                 height: 'auto',
                 events: [
-                    {% if event.tasks %}
-                        {% for task in event.tasks %}
-                        {
-                            title: {{ task.title | tojson | safe }},
-                            start: {{ (task.startDate or "") | tojson | safe }},
-                            end: {{ (task.dueDate or "") | tojson | safe }},
-                            backgroundColor: '#7c3aed',
-                            borderColor: '#6d28d9'
-                        },
-                        {% endfor %}
+                    {% if event_tasks %}
+                    {% for task in event_tasks %}
+                    {
+                        title: {{ task.title | tojson }},
+                        start: {{ (task.startDate.isoformat() if task.startDate and task.startDate is not string else (task.startDate or '')) | tojson }},
+                        end: {{ (task.deadline.isoformat() if task.deadline and task.deadline is not string else (task.deadline or '')) | tojson }},
+                        backgroundColor: '#7c3aed',
+                        borderColor: '#6d28d9'
+                    },
+                    {% endfor %}
                     {% endif %}
                 ]
             });
-    calendar.render();
+            calendar.render();
         }
     });
 
-    // Copy Script to Clipboard
+    /* =============================================
+     * Script Copy Utility
+     * ============================================= */
     function copyScript() {
-        const scriptText = document.getElementById('scriptContent').innerText;
-        navigator.clipboard.writeText(scriptText).then(() => {
+        const scriptEl = document.getElementById('scriptContent');
+        if (!scriptEl) return;
+        navigator.clipboard.writeText(scriptEl.innerText).then(() => {
             if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Copied!',
-                    text: 'Script copied to clipboard.',
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
+                Swal.fire({ title: 'Copied!', text: 'Script copied to clipboard.', icon: 'success', timer: 1500, showConfirmButton: false });
             } else {
                 alert('Script copied to clipboard!');
             }
@@ -505,7 +130,9 @@
         });
     }
 
-    // Download Media bypass CORS
+    /* =============================================
+     * Media Download Utility
+     * ============================================= */
     function downloadMedia(url, filename) {
         fetch(url)
             .then(response => {
@@ -525,16 +152,13 @@
             })
             .catch(error => {
                 console.error('Download error:', error);
-                // Fallback: open in new tab
                 window.open(url, '_blank');
             });
     }
 
-    // Contributors Logic
-    const eventID = "{{ event.id }}";
-    const orgID = "{{ event.orgID }}";
-    const activeTab = "{{ active_tab }}";
-
+    /* =============================================
+     * Contributors Module
+     * ============================================= */
     if (activeTab === 'contributors') {
         loadContributors();
         loadRoles();
@@ -545,8 +169,7 @@
             const response = await fetch('/event-ui/get-roles');
             const result = await response.json();
             if (result.message === 'Success') {
-                const selects = ['roleSelect', 'editRoleSelect'];
-                selects.forEach(id => {
+                ['roleSelect', 'editRoleSelect'].forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
                         el.innerHTML = result.data.map(role => `<option value="${role}">${role}</option>`).join('');
@@ -569,7 +192,6 @@
                     listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors found.</td></tr>';
                     return;
                 }
-
                 listContainer.innerHTML = result.data.map(c => `
                     <tr class="hover:bg-slate-50/50 transition-colors">
                         <td class="px-6 py-4">
@@ -596,9 +218,14 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="openEditRoleModal('${c.id}', '${c.targetEmail || ''}', '${c.role || ''}')" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
+                        <td class="px-6 py-4 text-right flex items-center justify-end gap-1">
+                            <button onclick="openEditRoleModal('${c.id}', '${c.targetEmail || ''}', '${c.role || ''}')" 
+                                class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Edit Role">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                            <button onclick="removeContributor('${c.id}')" 
+                                class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Remove Contributor">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                         </td>
                     </tr>
@@ -612,10 +239,10 @@
         }
     }
 
+    /* --- Invite Modal --- */
     function openInviteModal() {
         document.getElementById('inviteModal').classList.remove('hidden');
     }
-
     function closeInviteModal() {
         document.getElementById('inviteModal').classList.add('hidden');
         document.getElementById('inviteForm').reset();
@@ -641,7 +268,6 @@
                 body: JSON.stringify(data)
             });
             const result = await response.json();
-
             if (response.ok) {
                 Swal.fire({ title: 'Success!', text: 'Invitation sent successfully.', icon: 'success' });
                 closeInviteModal();
@@ -656,13 +282,13 @@
         }
     }
 
+    /* --- Edit Role Modal --- */
     function openEditRoleModal(docID, email, currentRole) {
         document.getElementById('editDocID').value = docID;
         document.getElementById('editTargetEmail').innerText = email;
         document.getElementById('editRoleSelect').value = currentRole;
         document.getElementById('editRoleModal').classList.remove('hidden');
     }
-
     function closeEditRoleModal() {
         document.getElementById('editRoleModal').classList.add('hidden');
     }
@@ -682,7 +308,6 @@
                 body: JSON.stringify({ roleName: roleName })
             });
             const result = await response.json();
-
             if (response.ok) {
                 Swal.fire({ title: 'Updated!', text: 'Contributor role updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
                 closeEditRoleModal();
@@ -695,6 +320,272 @@
         } finally {
             spinner.classList.add('hidden');
         }
+    }
+
+    /* --- Remove Contributor --- */
+    async function removeContributor(docID) {
+        const result = await Swal.fire({
+            title: 'Remove contributor?',
+            text: "This person will no longer have access to this event.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Yes, remove them'
+        });
+
+        if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removing...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            try {
+                const response = await fetch(`/event-ui/remove-contributor/${docID}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removed!', text: 'Contributor removed successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    loadContributors();
+                } else {
+                    throw new Error(data.data || "Removal failed");
+                }
+            } catch (error) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+            }
+        }
+    }
+
+    /* =============================================
+     * Task Assignment & Edit Module
+     * ============================================= */
+    let acceptedCollabs = [];
+
+    async function loadTaskCollabs() {
+        try {
+            const response = await fetch(`/event-ui/get-collabs-dropdown/${eventID}`);
+            const result = await response.json();
+            if (result.message === "Success") {
+                acceptedCollabs = result.data.filter(c => c.status === 'Accepted' && c.userAccID);
+                resolveAssigneeNames();
+            }
+        } catch (error) {
+            console.error('Error loading task collabs:', error);
+        }
+    }
+
+    function resolveAssigneeNames() {
+        const containers = document.querySelectorAll('[id^="assignee-"]');
+        containers.forEach(container => {
+            const taskId = container.id.replace('assignee-', '');
+            const taskData = TASK_DATA[taskId];
+            if (!taskData) return;
+
+            const assignedTo = taskData.assigned_to;
+            if (assignedTo && assignedTo !== 'NONE') {
+                const collab = acceptedCollabs.find(c => c.userAccID === assignedTo);
+                if (collab) {
+                    const displayChar = (collab.personName || collab.email || "?")[0].toUpperCase();
+                    const displayName = collab.personName || collab.email;
+                    container.innerHTML = `
+                        <div class="w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-[8px] font-bold border border-brand-200">
+                            ${displayChar}
+                        </div>
+                        <span class="text-[10px] font-medium text-slate-700">${displayName}</span>
+                    `;
+                }
+            }
+        });
+    }
+
+    /* --- Assign Task Modal --- */
+    function openAssignTaskModal(taskID) {
+        document.getElementById('assignTaskID').value = taskID;
+        const container = document.getElementById('collabsContainer');
+
+        if (acceptedCollabs.length === 0) {
+            container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4 italic">No accepted team members available.</p>';
+        } else {
+            container.innerHTML = acceptedCollabs.map(c => {
+                const displayChar = (c.personName || c.email || "?")[0].toUpperCase();
+                const displayName = c.personName || 'Unnamed User';
+                return `
+                <button onclick="submitTaskAssignment('${taskID}', '${c.userAccID}')" 
+                    class="w-full flex items-center gap-3 p-3 hover:bg-brand-50 rounded-xl transition-all border border-transparent hover:border-brand-100 text-left group">
+                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
+                        ${displayChar}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-brand-700">${displayName}</p>
+                        <p class="text-[10px] text-slate-400 font-medium">${c.email}</p>
+                    </div>
+                </button>
+            `}).join('');
+        }
+        document.getElementById('assignTaskModal').classList.remove('hidden');
+    }
+
+    function closeAssignTaskModal() {
+        document.getElementById('assignTaskModal').classList.add('hidden');
+    }
+
+    async function submitTaskAssignment(taskID, userID) {
+        if (typeof Swal !== 'undefined') Swal.fire({ title: 'Assigning...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+        try {
+            const response = await fetch(`/event-ui/assign-task/${taskID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userID: userID })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Assigned!', text: 'User assigned to task successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                closeAssignTaskModal();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(result.data || "Assignment failed");
+            }
+        } catch (error) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+        }
+    }
+
+    /* --- Edit Task Modal --- */
+    function extractDateForInput(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function openEditTaskModal(taskID) {
+        const task = TASK_DATA[taskID];
+        if (!task) {
+            console.error('Task data not found for ID:', taskID);
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: 'Could not load task data.', icon: 'error' });
+            return;
+        }
+
+        document.getElementById('editTaskID').value = taskID;
+        document.getElementById('editTaskTitle').value = task.title || '';
+        document.getElementById('editTaskDescription').value = task.description || '';
+        document.getElementById('editTaskPriority').value = task.priority || 'medium';
+        document.getElementById('editTaskStatus').value = task.status || 'in progress';
+        document.getElementById('editTaskStartDate').value = extractDateForInput(task.startDate);
+        document.getElementById('editTaskDeadline').value = extractDateForInput(task.deadline);
+
+        document.getElementById('editTaskModal').classList.remove('hidden');
+    }
+
+    function closeEditTaskModal() {
+        document.getElementById('editTaskModal').classList.add('hidden');
+    }
+
+    async function submitTaskUpdate(event) {
+        event.preventDefault();
+        const taskID = document.getElementById('editTaskID').value;
+        const spinner = document.getElementById('editTaskSpinner');
+        spinner.classList.remove('hidden');
+
+        const formData = new FormData(event.target);
+        const data = {};
+
+        formData.forEach((value, key) => {
+            if (value) {
+                if (key === 'startDate' || key === 'deadline') {
+                    data[key] = new Date(value).toISOString();
+                } else {
+                    data[key] = value;
+                }
+            }
+        });
+
+        try {
+            const response = await fetch(`/event-ui/update-task/${taskID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (response.ok) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Updated!', text: 'Task updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                closeEditTaskModal();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(result.data || "Update failed");
+            }
+        } catch (error) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+        } finally {
+            spinner.classList.add('hidden');
+        }
+    }
+
+    /* --- Delete Task --- */
+    async function deleteTask(taskID) {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Deleting...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            try {
+                const response = await fetch(`/event-ui/delete-task/${taskID}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ title: 'Deleted!', text: 'Task has been deleted.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(data.data || "Deletion failed");
+                }
+            } catch (error) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+            }
+        }
+    }
+
+    /* --- Unassign Task --- */
+    async function unassignTask(taskID) {
+        const result = await Swal.fire({
+            title: 'Unassign person?',
+            text: "This will remove the current assignee from this task.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#7c3aed',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Yes, unassign'
+        });
+
+        if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removing assignment...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            try {
+                const response = await fetch(`/event-ui/unassign-task/${taskID}`, {
+                    method: 'PUT'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removed!', text: 'Assignment has been removed.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(data.data || "Unassignment failed");
+                }
+            } catch (error) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+            }
+        }
+    }
+
+    /* =============================================
+     * Initialization
+     * ============================================= */
+    if (activeTab === 'tasks') {
+        loadTaskCollabs();
     }
 </script>
 {% endblock %}

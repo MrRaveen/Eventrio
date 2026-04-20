@@ -21,7 +21,7 @@ Eventrio simplifies event management through intelligent automation:
 
 ## 📸 Guided Walkthrough
 
-![Starting Page](image.png)
+![alt text](image.png)
 <!-- slide -->
 ![Professional Login](image-1.png)
 <!-- slide -->

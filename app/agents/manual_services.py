@@ -1,3 +1,4 @@
+from app.models.tasks import tasks
 import cloudinary
 from app.models.projects import Projects
 from app.models.userAcc import userAcc
@@ -23,6 +24,7 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
         description=description,
         orgID=org_id,
         ownerID=owner_id,
+        attendeeCountExpected=100,
         industry=["IT"],
         userRole=["manager"]
     )
@@ -248,7 +250,7 @@ def create_slides(markdown_text: str):
             os.remove(temp_path)
 
 #save tasks to DB
-def save_tasks_to_db(owner_id: str, event_id: str, tasks_data_json: str) -> str:
+def save_tasks_to_db(owner_id: str, event_id: str,org_id:str, tasks_data_json: str) -> str:
     project = Projects.objects(id=event_id).first()
     if not project: return "Error: Event not found."
     try:
@@ -260,23 +262,33 @@ def save_tasks_to_db(owner_id: str, event_id: str, tasks_data_json: str) -> str:
         return "Error: tasks_data_json must be a JSON array."
     new_tasks = []
     for item in tasks_data:
-        if isinstance(item, str):
-            new_tasks.append({
-                "id": str(uuid.uuid4()),
-                "title": item,
-                "isCompleted": False
-            })
-        elif isinstance(item, dict):
-            new_tasks.append({
-                "id": str(uuid.uuid4()),
-                "title": item.get('title', 'Untitled Task'),
-                "startDate": item.get('start_date', ''),
-                "dueDate": item.get('due_date', ''),
-                "isCompleted": False
-            })
-    project.tasks.extend(new_tasks)
-    project.save()
-    return f"Successfully saved {len(new_tasks)} tasks to MongoDB."
+        newTask = tasks(
+            orgID=org_id,
+            event_id=event_id,
+            created_by="SYSTEM",
+            assigned_to="NONE",
+            title=item.get('title', 'Untitled Task'),
+            description=item.get('description',''),
+            startDate=item.get('start_date', ''),
+            deadline=item.get('due_date', ''),
+            media_links=[]
+        )
+        newTask.save()
+        # if isinstance(item, str):
+        #     new_tasks.append({
+        #         "id": str(uuid.uuid4()),
+        #         "title": item,
+        #         "isCompleted": False
+        #     })
+        # elif isinstance(item, dict):
+        #     new_tasks.append({
+        #         "id": str(uuid.uuid4()),
+        #         "title": item.get('title', 'Untitled Task'),
+        #         "startDate": item.get('start_date', ''),
+        #         "dueDate": item.get('due_date', ''),
+        #         "isCompleted": False
+        #     })
+    return f"Successfully saved {len(tasks_data)} tasks to MongoDB."
 
 
 

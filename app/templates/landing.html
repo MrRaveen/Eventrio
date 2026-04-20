@@ -1,31 +1,183 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="flex-grow flex items-center justify-center relative overflow-hidden py-20 bg-white">
-    <!-- Subtle Background Accents -->
-    <div class="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
-        <div class="absolute top-[-10%] left-[-10%] w-[40rem] h-[40rem] bg-brand-50 rounded-full blur-[120px]"></div>
-        <div class="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-blue-50 rounded-full blur-[100px]"></div>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+    .hero-section {
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    @keyframes fadeUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes pulseDot {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.35;
+        }
+    }
+
+    .hero-animate {
+        opacity: 0;
+        animation: fadeUp 0.7s ease forwards;
+    }
+
+    .hero-animate-1 {
+        animation-delay: 0.10s;
+    }
+
+    .hero-animate-2 {
+        animation-delay: 0.22s;
+    }
+
+    .hero-animate-3 {
+        animation-delay: 0.34s;
+    }
+
+    .hero-animate-4 {
+        animation-delay: 0.46s;
+    }
+
+    .hero-animate-5 {
+        animation-delay: 0.58s;
+    }
+
+    .hero-animate-6 {
+        animation-delay: 0.72s;
+    }
+
+    .hero-badge-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #0F6E56;
+        display: inline-block;
+        animation: pulseDot 2s infinite;
+    }
+
+    .hero-btn-primary {
+        display: inline-block;
+        padding: 14px 32px;
+        background: #534AB7;
+        color: #fff;
+        font-size: 14px;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        border-radius: 4px;
+        border: 1px solid rgba(83, 74, 183, 0.2);
+        box-shadow: 0 2px 16px rgba(83, 74, 183, 0.18);
+        text-decoration: none;
+        transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+
+    .hero-btn-primary:hover {
+        background: #4540a0;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(83, 74, 183, 0.28);
+    }
+
+    .hero-btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 14px 24px;
+        background: #fff;
+        color: #2a2745;
+        font-size: 14px;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        text-decoration: none;
+        transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .hero-btn-ghost:hover {
+        color: #534AB7;
+        border-color: rgba(83, 74, 183, 0.35);
+        box-shadow: 0 2px 12px rgba(83, 74, 183, 0.08);
+    }
+</style>
+
+<section class="hero-section relative flex items-center justify-center overflow-hidden min-h-screen px-6 py-20"
+    style="background:#fafaf8;">
+
+    <!-- Grid texture -->
+    <div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(0,0,0,0.042) 1px, transparent 1px),
+                                 linear-gradient(90deg, rgba(0,0,0,0.042) 1px, transparent 1px);
+              background-size: 60px 60px;">
     </div>
 
-    <div class="relative z-10 max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-        <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-slate-900 leading-tight">
-            Next-Gen <br>
-            <span class="text-brand-600">Event Automation</span>
+    <!-- Ambient glows -->
+    <div class="absolute pointer-events-none" style="top:-100px;left:-140px;width:520px;height:520px;
+              background:radial-gradient(circle,rgba(83,74,183,0.08) 0%,transparent 70%);"></div>
+    <div class="absolute pointer-events-none" style="bottom:-80px;right:-100px;width:400px;height:400px;
+              background:radial-gradient(circle,rgba(29,158,117,0.07) 0%,transparent 70%);"></div>
+
+    <!-- Vertical centre rule -->
+    <div class="absolute top-0 left-1/2 h-full pointer-events-none" style="width:1px;background:rgba(0,0,0,0.05);">
+    </div>
+
+    <!-- Live badge -->
+    <div class="absolute top-8 right-8 flex items-center gap-2 hero-animate hero-animate-1"
+        style="font-size:11px;letter-spacing:0.06em;color:rgba(30,28,60,0.45);">
+        <span class="hero-badge-dot"></span>
+        Live platform
+    </div>
+
+    <!-- Content -->
+    <div class="relative z-10 max-w-3xl w-full">
+
+        <!-- Eyebrow -->
+        <div class="flex items-center gap-2 mb-7 hero-animate hero-animate-1"
+            style="font-size:11px;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;color:#534AB7;">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[#534AB7]"></span>
+            AI-Powered Event Automation
+        </div>
+
+        <!-- Headline -->
+        <h1 class="hero-animate hero-animate-2" style="font-family:'Playfair Display',serif;font-size:clamp(44px,7vw,68px);
+               line-height:1.05;font-weight:700;color:#0f0e1a;margin-bottom:6px;">
+            Next-Gen<br>
+            <em style="font-style:italic;color:#534AB7;">Event</em> Platform
         </h1>
-        <p class="mt-4 text-xl md:text-2xl text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
-            Automate your virtual events, scale your audience, and manage your online presence seamlessly with advanced
-            AI workflows.
+        <p class="hero-animate hero-animate-3" style="font-family:'Playfair Display',serif;font-size:clamp(44px,7vw,68px);
+              line-height:1.05;font-weight:400;color:rgba(15,14,26,0.2);margin-bottom:36px;">
+            Built for scale.
         </p>
-        <div class="flex flex-col sm:flex-row justify-center gap-6">
-            <a href="{{ url_for('auth_login.login') }}"
-                class="px-10 py-5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-2xl shadow-xl shadow-brand-200 transition-all duration-300 transform hover:-translate-y-1 text-lg">
-                Get Started for Free
+
+        <!-- Description -->
+        <p class="hero-animate hero-animate-4 max-w-lg"
+            style="font-size:15px;line-height:1.75;color:rgba(30,28,60,0.58);font-weight:300;margin-bottom:44px;">
+            Automate your virtual events, grow your audience, and manage your entire online presence with intelligent AI
+            workflows — from registration to replay.
+        </p>
+
+        <!-- CTAs -->
+        <div class="flex flex-wrap items-center gap-4 hero-animate hero-animate-5">
+            <a href="{{ url_for('auth_login.login') }}" class="hero-btn-primary">
+                Get Started — It's Free
             </a>
-            <a href="{{ url_for('ui_endpoints.browse_events') }}"
-                class="px-10 py-5 bg-white border-2 border-slate-200 text-slate-700 font-bold rounded-2xl shadow-lg hover:bg-slate-50 transition-all duration-300 transform hover:-translate-y-1 text-lg">
-                Browse Events
+            <a href="{{ url_for('ui_endpoints.browse_events') }}" class="hero-btn-ghost">
+                Browse Events <span style="opacity:0.4;">→</span>
             </a>
         </div>
+
     </div>
-</div>
+
+</section>
 {% endblock %}

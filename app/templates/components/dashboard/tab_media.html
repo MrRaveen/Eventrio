@@ -1,0 +1,27 @@
+<!-- Media Tab Component -->
+<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
+    <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm mb-6">Generated Media</h3>
+    {% if event.mediaLinks and event.mediaLinks|length > 0 %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for link in event.mediaLinks %}
+        <div class="group relative rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+            <img src="{{ link }}" alt="Event Media"
+                class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105">
+            <div
+                class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <button onclick="downloadMedia('{{ link }}', 'event_media_{{ loop.index }}.jpg')"
+                    class="px-4 py-2 bg-white text-brand-600 font-bold rounded-lg shadow-lg hover:bg-brand-50 transition-colors flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Download
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-slate-400 italic text-center py-8">No media has been generated for this event yet.</p>
+    {% endif %}
+</div>

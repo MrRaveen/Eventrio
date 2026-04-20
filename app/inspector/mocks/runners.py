@@ -159,6 +159,7 @@ class Runner:
             tasksSaveRes = save_tasks_to_db(
                 owner_id=user_id,
                 event_id=clean_event_id,
+                org_id=os.getenv('TEST_ORG_ID'),
                 tasks_data_json=os.getenv('TEST_TASKS_DATA')
             )
 

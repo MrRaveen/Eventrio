@@ -5,28 +5,36 @@
 
         <div class="text-center mb-16">
             <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">Simple, Transparent Pricing</h1>
-            <p class="text-xl text-slate-500 max-w-2xl mx-auto">Choose the perfect plan for your event organization needs. No hidden fees, just pure automation.</p>
+            <p class="text-xl text-slate-500 max-w-2xl mx-auto">Choose the perfect plan for your event organization
+                needs. No hidden fees, just pure automation.</p>
         </div>
 
         <div class="max-w-3xl mx-auto mb-16 p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
             <p class="font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 Monthly API Limits Apply
             </p>
             <div class="flex flex-wrap justify-center gap-3">
                 {% for service in ['Buffer', 'Cloudinary', 'Google Calendar', 'Notion', 'Google Meet'] %}
-                <span class="px-3 py-1 bg-slate-50 border border-slate-100 rounded text-xs font-bold text-slate-600 uppercase tracking-tighter">{{ service }}</span>
+                <span
+                    class="px-3 py-1 bg-slate-50 border border-slate-100 rounded text-xs font-bold text-slate-600 uppercase tracking-tighter">{{
+                    service }}</span>
                 {% endfor %}
             </div>
-            <p class="mt-4 text-xs text-slate-400 italic text-center">Counts reset every month. MVP currently supports online events only.</p>
+            <p class="mt-4 text-xs text-slate-400 italic text-center">Counts reset every month. MVP currently supports
+                online events only.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
 
-            <div class="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                <div class="absolute top-0 right-0 bg-brand-50 text-brand-700 text-[10px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">Active MVP</div>
+            <div
+                class="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div
+                    class="absolute top-0 right-0 bg-brand-50 text-brand-700 text-[10px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">
+                    Active MVP</div>
                 <div class="mb-8">
                     <h3 class="text-xl font-bold text-slate-900 mb-2">Free Plan</h3>
                     <div class="flex items-baseline gap-1">
@@ -37,35 +45,43 @@
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         1 Organization
                     </li>
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         1 Project Workspace
                     </li>
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         Up to 5 Participants
                     </li>
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         4 AI Chat Requests
                     </li>
                 </ul>
-                <a href="{{ url_for('main_dashboard.chat_main') }}"
-                    class="w-full py-3 px-6 text-center rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shadow-sm">Current Plan</a>
+                <a href="{{ url_for('ui_endpoints.user_profile_ui') }}"
+                    class="w-full py-3 px-6 text-center rounded-lg font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all shadow-sm">Current
+                    Plan</a>
             </div>
 
-            <div class="bg-white border-2 border-brand-500 rounded-2xl p-8 flex flex-col shadow-xl relative transform scale-105 z-10 transition-transform">
-                <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">Upgrade Now</div>
+            <div
+                class="bg-white border-2 border-brand-500 rounded-2xl p-8 flex flex-col shadow-xl relative transform scale-105 z-10 transition-transform">
+                <div
+                    class="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
+                    Upgrade Now</div>
                 <div class="mb-8">
                     <h3 class="text-xl font-bold text-slate-900 mb-2">Pro Plan</h3>
                     <div class="flex items-baseline gap-1">
@@ -76,25 +92,29 @@
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         20 Organizations
                     </li>
                     <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         200 Projects
                     </li>
                     <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         300 Participants
                     </li>
                     <li class="flex items-center gap-3 text-sm font-medium text-slate-700">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         Unlimited AI Chat
                     </li>
@@ -103,11 +123,13 @@
                     <input type="hidden" name="planName" value="Pro Plan">
                     <input type="hidden" name="planAmount" value="2000">
                     <button type="submit"
-                        class="w-full py-3 px-6 rounded-lg font-bold bg-brand-500 text-white hover:bg-brand-600 shadow-md transition-all">Subscribe to Pro</button>
+                        class="w-full py-3 px-6 rounded-lg font-bold bg-brand-500 text-white hover:bg-brand-600 shadow-md transition-all">Subscribe
+                        to Pro</button>
                 </form>
             </div>
 
-            <div class="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow">
+            <div
+                class="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow">
                 <div class="mb-8">
                     <h3 class="text-xl font-bold text-slate-900 mb-2">Ultimate Plan</h3>
                     <div class="flex items-baseline gap-1">
@@ -118,19 +140,22 @@
                 <ul class="space-y-4 mb-8 flex-1">
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         Unlimited Everything
                     </li>
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         White Label Support
                     </li>
                     <li class="flex items-center gap-3 text-sm text-slate-600">
                         <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                            </path>
                         </svg>
                         Custom Automations
                     </li>
@@ -139,7 +164,8 @@
                     <input type="hidden" name="planName" value="Ultimate Plan">
                     <input type="hidden" name="planAmount" value="5000">
                     <button type="submit"
-                        class="w-full py-3 px-6 rounded-lg font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Subscribe to Ultimate</button>
+                        class="w-full py-3 px-6 rounded-lg font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Subscribe
+                        to Ultimate</button>
                 </form>
             </div>
 
@@ -149,7 +175,8 @@
             <a href="{{ url_for('main_dashboard.chat_main') }}"
                 class="inline-flex items-center gap-2 text-brand-600 font-bold hover:underline">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                 </svg>
                 Return to Dashboard
             </a>

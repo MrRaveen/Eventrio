@@ -13,6 +13,7 @@ from flask import (
 from urllib.parse import unquote
 from app.models.organizations import Organizations
 from app.models.projects import Projects
+from app.models.tasks import tasks
 from app.models.userAcc import userAcc
 
 from app.models.enum.IndustryEnum import IndustryEnum
@@ -118,7 +119,8 @@ def event_dashboard(event_id):
     if event.scriptLink and event.scriptLink.startswith("data:text/plain"):
         raw_encoded = event.scriptLink.split(",", 1)[-1]
         script_text = unquote(raw_encoded)
-    return render_template('event_dashboard.html', event=event, script_text=script_text, active_tab=tab)
+    event_tasks = tasks.objects(event_id=event_id)
+    return render_template('event_dashboard.html', event=event, script_text=script_text, active_tab=tab, event_tasks=event_tasks)
 
 @ui_endpoints.route('/browse-events')
 def browse_events():
@@ -131,6 +133,18 @@ def browse_events():
         organization = Organizations.objects(id=e.orgID).first()
         org_name = organization.orgName if organization else "Unknown Organization"
         
+        # Fetch tasks for this event
+        fetched_tasks = tasks.objects(event_id=str(e.id))
+        task_list = []
+        for t in fetched_tasks:
+            task_list.append({
+                "id": str(t.id),
+                "title": t.title,
+                "startDate": t.startDate.strftime('%Y-%m-%dT%H:%M:%S') if t.startDate else None,
+                "dueDate": t.deadline.strftime('%Y-%m-%dT%H:%M:%S') if t.deadline else None,
+                "status": t.status.value if hasattr(t.status, 'value') else t.status
+            })
+
         resObj = ProjectSchema(
             id = str(e.id),
             name = e.name,
@@ -144,7 +158,7 @@ def browse_events():
             orgName = org_name,
             orgID = e.orgID,
             mediaLinks = e.mediaLinks,
-            tasks = e.tasks
+            tasks = task_list
         )
         allEventsResponse.append(resObj)
         

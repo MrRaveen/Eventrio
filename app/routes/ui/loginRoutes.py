@@ -78,6 +78,7 @@ def auth():
         token = google.authorize_access_token()
         user_info = token.get('userinfo')
         user_sub = user_info.get('sub')
+        session['user_email'] = user_info.get('email')
         session['user_id'] = user_sub
         existing_user = userAcc.objects(sub=user_sub).first()
         if existing_user:

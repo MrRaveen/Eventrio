@@ -20,4 +20,3 @@ class Projects(Document):
     meetingUrl = StringField(default="")
     slideShowLink = StringField()
     scriptLink = StringField()
-    tasks = ListField(DictField())

@@ -22,10 +22,11 @@ class tasks(Document):
     orgID = StringField()
     event_id = StringField()
     created_by = StringField()
-    assigned_to = StringField()
+    assigned_to = StringField()#non ai
     title = StringField(required=True)
     description = StringField()
-    priority = EnumField(TaskPriority, default=TaskPriority.MEDIUM)
-    status = EnumField(TaskStatus, default=TaskStatus.IN_PROGRESS)
+    priority = EnumField(TaskPriority, default=TaskPriority.MEDIUM)#non ai
+    status = EnumField(TaskStatus, default=TaskStatus.IN_PROGRESS)#non ai
+    startDate = DateTimeField()
     deadline = DateTimeField()
-    media_links = ListField(StringField())
+    media_links = ListField(StringField())#non ai
