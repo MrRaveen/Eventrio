@@ -6,6 +6,9 @@ Eventrio is an advanced, AI-driven event planning and management platform design
 
 ---
 
+## Video demo (Beta version)
+https://youtu.be/wtZAabPsHuM
+
 ## ✨ Features for Everyone
 
 Eventrio simplifies event management through intelligent automation:
