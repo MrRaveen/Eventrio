@@ -7,11 +7,19 @@ class Hook(importlib.abc.MetaPathFinder):
         base_dir = os.path.dirname(__file__)
         mocks_dir = os.path.join(base_dir, "mocks")
 
+        # leaf_targets = {
+        #     "google.adk.agents.llm_agent": "llm_agent.py",
+        #     "google.adk.runners": "runners.py",
+        #     "google.adk.sessions.in_memory_session_service": "in_memory_session_service.py",
+        #     "google.genai.types": "types.py"
+        # }
         leaf_targets = {
-            "google.adk.agents.llm_agent": "llm_agent.py",
+            "google.adk.agents": "llm_agent.py", 
             "google.adk.runners": "runners.py",
             "google.adk.sessions.in_memory_session_service": "in_memory_session_service.py",
-            "google.genai.types": "types.py"
+            "google.genai.types": "types.py", 
+            "google.adk.models.lite_llm": "lite_llm.py",  
+            "google.adk.tools": "mcp_tool.py", 
         }
 
         if fullname in leaf_targets:
@@ -21,12 +29,20 @@ class Hook(importlib.abc.MetaPathFinder):
             )
         # to intercept requests for the parent packages and hand Python 
         # an empty "dummy" package so it keeps searching down the chain.
+        # parent_packages = [
+        #     "google", 
+        #     "google.adk", 
+        #     "google.adk.agents", 
+        #     "google.adk.sessions",
+        #     "google.genai"
+        # ]
         parent_packages = [
             "google", 
             "google.adk", 
             "google.adk.agents", 
             "google.adk.sessions",
-            "google.genai"
+            "google.genai",
+            "google.adk.models",    
         ]
         
         if fullname in parent_packages:

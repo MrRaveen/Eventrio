@@ -13,9 +13,9 @@ python-dotenv
 requests
 
 # Google ADK & MCP Integration
-google-adk
+# google-adk
 toolbox-core
-mcp
+# mcp
 
 # Media Hosting
 cloudinary
@@ -27,3 +27,12 @@ redis
 mdtopptx
 python-pptx
 mailjet-rest
+dnspython
+# Core Agent Framework
+google-adk[extensions]
+google-genai
+# Local Model Integration (Pinned for security/compatibility)
+litellm
+# Essential ADK & Infrastructure Dependencies
+mcp
+dnspython

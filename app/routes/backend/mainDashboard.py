@@ -242,7 +242,13 @@ def chat_main():
     if not getattr(agent_manager, 'main_agent', None):
         return jsonify({"error": "Main agent not initialized"}), 500
     user_id = session.get('user_id', 'unknown_user')
-    enriched_prompt = f"[System: User executing this is '{user_id}'. You can use this ID for owner_id in tools] User Request: {prompt}"
+    
+    system_context = f"User executing this is '{user_id}'. You can use this ID for owner_id in tools."
+    if fbPageID:
+        system_context += f" The selected Facebook Page ID (fbPageID) is '{fbPageID}'."
+        
+    enriched_prompt = f"[System: {system_context}] User Request: {prompt}"
+    
     try:
         response = agent_manager.run_agent(agent_manager.main_agent, prompt=enriched_prompt, fbPageID=fbPageID, user_id=user_id)
         return jsonify({"response": response})

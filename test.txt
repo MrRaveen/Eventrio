@@ -1,1015 +1,172 @@
-{% extends 'base.html' %}
-{% block content %}
-<div class="flex h-screen w-full bg-slate-50 overflow-hidden text-slate-900 transition-colors duration-200">
+from mcp import StdioServerParameters
+import traceback
+from app.agents.manual_services import save_tasks_to_db
+from app.agents.manual_services import schedule_real_google_calendar
+from app.agents.manual_services import create_google_doc_for_event
+from app.agents.manual_services import generate_media_for_event
+from app.agents.manual_services import create_event
+import os
+from app.models.projects import Projects
+from app.models.userAcc import userAcc
+try:
+    from google.adk.agents import Agent  
+    from google.adk import Runner
+    from google.adk.sessions import InMemorySessionService
+    from google import genai  
+    from google.adk.models import LiteLlm  
+    from google.genai import types
+except ImportError as e:
+    print(f"CRITICAL: Global ADK Import Failed: {e}")
+    Agent = types = Runner = InMemorySessionService = LiteLlm = None
+import uuid
+import requests
+import json
 
-    <!-- Sidebar -->
-    <aside
-        class="w-20 lg:w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300">
-        <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-200">
-            <span class="text-lg font-bold hidden lg:block text-brand-700">Event Dashboard</span>
-            <span class="text-xl font-bold lg:hidden text-brand-600">ED</span>
-        </div>
-        <nav class="flex-1 px-2 lg:px-3 py-6 space-y-1 overflow-y-auto w-full overflow-x-hidden">
-            <!-- Tasks -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='tasks') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'tasks' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Tasks</span>
-            </a>
-            <!-- Calendar -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='calendar') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'calendar' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Calendar</span>
-            </a>
-            <!-- Media post generation -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='media') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'media' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Media Generation</span>
-            </a>
-            <!-- Script -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='script') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'script' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Script</span>
-            </a>
-            {% if event.meetingUrl %}
-            <!-- Online Meeting -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='meeting') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'meeting' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Online Meeting</span>
-            </a>
-            {% endif %}
-            {% if event.slideShowLink %}
-            <!-- Slideshow -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='slideshow') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'slideshow' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Slideshow</span>
-            </a>
-            {% endif %}
-            <!-- Contributors -->
-            <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='contributors') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'contributors' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
-                    </path>
-                </svg>
-                <span class="text-[10px] lg:text-sm text-center lg:text-left">Contributors</span>
-            </a>
-            <!-- Back to Dash -->
-            <div class="pt-6 mt-6 border-t border-slate-100">
-                <a href="{{ url_for('ui_endpoints.dashboard') }}"
-                    class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 text-slate-400 hover:text-brand-600 transition-all">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 8.959 8.959 0 01-9 9 8.959 8.959 0 01-9-9z">
-                        </path>
-                    </svg>
-                    <span class="text-[10px] lg:text-sm font-medium">Dashboard</span>
-                </a>
-            </div>
-        </nav>
-    </aside>
+class EventAgentsManager:
+    def __init__(self):
+        try:
+            from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams
+            print("MCP tools loaded successfully")
+        except ImportError:
+            print("Notice: MCP tools not found. Running agents without MCP.")
+            McpToolset = StdioConnectionParams = None
 
-    <!-- Main Workspace -->
-    <main class="flex-1 overflow-y-auto p-6 md:p-10">
-        <div class="max-w-5xl mx-auto space-y-8">
-            <header class="border-b border-slate-200 pb-6 flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
-                        {{ event.name }}
-                        {% if event.isEventStarted %}
-                        <span
-                            class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded uppercase tracking-widest">Started</span>
-                        {% else %}
-                        <span
-                            class="px-2 py-0.5 bg-brand-100 text-brand-700 text-xs font-bold rounded uppercase tracking-widest">Upcoming</span>
-                        {% endif %}
-                    </h2>
-                    {% if event.description %}
-                    <p class="text-slate-500 mt-2 text-lg">{{ event.description }}</p>
-                    {% endif %}
-                </div>
-            </header>
+        if Agent is None:
+            print("Google ADK missing. Agent functionality disabled.")
+            self.planning_agent = None
+            self.media_agent = None
+            self.social_media_agent = None
+            self.stream_handler_agent = None
+            self.main_agent = None
+            return
 
-            <!-- Dynamic Content Area -->
-            {% if active_tab == 'tasks' %}
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 space-y-8">
-                    <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                                </path>
-                            </svg>
-                            <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Generated Tasks</h3>
-                        </div>
-                        <div class="p-6">
-                            {% if event_tasks %}
-                            <ul class="divide-y divide-slate-100">
-                                {% for task in event_tasks %}
-                                <li class="py-4 first:pt-0 last:pb-0 group" data-task-id="{{ task.id }}"
-                                    data-task-data='{{ task.to_json() | safe }}'>
-                                    <div class="flex items-center justify-between gap-4">
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <span
-                                                    class="font-bold text-slate-800 truncate group-hover:text-brand-600 transition-colors">{{
-                                                    task.title }}</span>
-                                                <span
-                                                    class="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded uppercase tracking-widest">{{
-                                                    task.status if task.status is string else task.status.value
-                                                    }}</span>
-                                            </div>
-                                            {% if task.description %}
-                                            <p class="text-xs text-slate-500 line-clamp-1 mb-2">{{ task.description }}
-                                            </p>
-                                            {% endif %}
-                                            <div class="flex items-center gap-4">
-                                                <div
-                                                    class="flex flex-col text-[10px] text-slate-400 uppercase font-bold">
-                                                    {% if task.startDate %}
-                                                    <span>Start: {{ task.startDate.strftime('%b %d') if task.startDate
-                                                        is not string else task.startDate|truncate(12, true, '')
-                                                        }}</span>
-                                                    {% endif %}
-                                                    {% if task.deadline %}
-                                                    <span class="text-brand-500">Due: {{ task.deadline.strftime('%b %d')
-                                                        if task.deadline is not string else task.deadline|truncate(12,
-                                                        true, '') }}</span>
-                                                    {% endif %}
-                                                </div>
-                                                <div class="h-4 w-px bg-slate-200"></div>
-                                                <div class="flex items-center gap-2">
-                                                    <span
-                                                        class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Assignee</span>
-                                                    <div id="assignee-{{ task.id }}" class="flex items-center gap-1.5">
-                                                        <div
-                                                            class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-400 border border-slate-200">
-                                                            {{ task.assigned_to[:1].upper() if task.assigned_to and
-                                                            task.assigned_to != 'NONE' else '?' }}
-                                                        </div>
-                                                        <span class="text-[10px] font-medium text-slate-500">{{
-                                                            task.assigned_to if task.assigned_to and task.assigned_to !=
-                                                            'NONE' else 'Unassigned' }}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onclick="openAssignTaskModal('{{ task.id }}')"
-                                                class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
-                                                title="Assign To">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                                </svg>
-                                            </button>
-                                            <button
-                                                onclick='openEditTaskModal({{ task.to_json() | safe }}, "{{ task.id }}")'
-                                                class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all"
-                                                title="Edit Task">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </li>
-                                {% endfor %}
-                            </ul>
-                            {% else %}
-                            <p class="text-slate-400 italic text-center py-4 text-sm">No tasks generated yet.</p>
-                            {% endif %}
-                        </div>
-                    </section>
-                </div>
-                <!-- Right Sidebar -->
-                <div class="space-y-8">
-                    <section class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                        <div class="p-6">
-                            <div
-                                class="flex items-center gap-3 mb-6 font-bold text-slate-800 uppercase tracking-wider text-sm">
-                                <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                                Schedule
-                            </div>
-                            <div class="space-y-6">
-                                <div>
-                                    <div class="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">
-                                        Starts</div>
-                                    <div class="text-md font-medium text-slate-700">
-                                        {% if event.startDate %}{{ event.startDate.strftime('%b %d, %Y %I:%M %p') }}{%
-                                        else %}TBD{% endif %}
-                                    </div>
-                                </div>
-                                <div>
-                                    <div class="text-[10px] text-slate-400 uppercase tracking-widest font-black mb-1">
-                                        Ends</div>
-                                    <div class="text-md font-medium text-slate-700">
-                                        {% if event.endDate %}{{ event.endDate.strftime('%b %d, %Y %I:%M %p') }}{% else
-                                        %}TBD{% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                </div>
-            </div>
+        try:
+            mcp_toolset = None
+            # local_llm = LiteLlm(model="ollama_chat/gemma2:2b")
+            local_llm = LiteLlm(
+                            model="ollama/glm-4.7:cloud", # or use any model you find in the ollama.com library
+                            api_key=os.getenv("MODEL_KEY"),
+                            api_base="https://ollama.com/api/generate"
+                        )
+            if McpToolset and StdioConnectionParams:
+                mcp_script_path = os.path.join(os.path.dirname(__file__), 'mcp_server.py')
+                connection_params = StdioConnectionParams(
+                    server_params=StdioServerParameters(
+                        command="python",
+                        args=[mcp_script_path]
+                    )
+                )
+                mcp_toolset = McpToolset(connection_params=connection_params)
 
-            {% elif active_tab == 'calendar' %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Event Calendar</h3>
-                    <a href="https://calendar.google.com/calendar/u/0/r" target="_blank"
-                        class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-bold text-sm rounded-lg transition-all flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                        </svg>
-                        Open Google Calendar
-                    </a>
-                </div>
-                <div id="calendar" class="min-h-[500px]"></div>
-            </div>
+            planning_tools = [create_event, create_google_doc_for_event, schedule_real_google_calendar, save_tasks_to_db, generate_media_for_event, mcp_toolset] if mcp_toolset else [create_event, create_google_doc_for_event, schedule_real_google_calendar, save_tasks_to_db, generate_media_for_event]
+            media_tools = [generate_media_for_event, mcp_toolset] if mcp_toolset else [generate_media_for_event]
+            other_tools = [mcp_toolset] if mcp_toolset else []
 
-            {% elif active_tab == 'media' %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
-                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm mb-6">Generated Media</h3>
-                {% if event.mediaLinks and event.mediaLinks|length > 0 %}
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {% for link in event.mediaLinks %}
-                    <div class="group relative rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-                        <img src="{{ link }}" alt="Event Media"
-                            class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <button onclick="downloadMedia('{{ link }}', 'event_media_{{ loop.index }}.jpg')"
-                                class="px-4 py-2 bg-white text-brand-600 font-bold rounded-lg shadow-lg hover:bg-brand-50 transition-colors flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                                Download
-                            </button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p class="text-slate-400 italic text-center py-8">No media has been generated for this event yet.</p>
-                {% endif %}
-            </div>
+            self.planning_agent = Agent(
+                model=local_llm,
+                name='planning_agent',
+                description='Plans events and schedules them natively and externally.',
+                instruction='You are an autonomous event planner. When asked to create an event, DO NOT ask the user for tasks or a plan. Automatically generate a detailed list of tasks including their start and due dates based on the event context. Use create_event to save to DB (IMPORTANT: Extract the org_id from the [Context] block if present, and use the provided owner_id). IMPORTANT: For schedule_real_google_calendar, you MUST convert and format start_time and end_time as valid RFC3339 datetime strings (e.g. 2026-04-09T00:30:00Z) before calling it. For save_tasks_to_db, pass `tasks_data_json` as a valid JSON string (an array of dictionaries). Draft the document using create_google_doc_for_event. Finally, you MUST use generate_media_for_event to generate an image and announcer script for the event. For the script_context, provide a short, fun 1-sentence welcome script for the announcer.',
+                tools=planning_tools
+            )
 
-            {% elif active_tab == 'script' %}
-            <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm">Announcer Script</h3>
-                    <div class="flex gap-3">
-                        <button onclick="copyScript()"
-                            class="px-4 py-2 bg-slate-100 text-slate-600 hover:bg-slate-200 font-bold text-sm rounded-lg transition-all flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z">
-                                </path>
-                            </svg>
-                            Copy Script
-                        </button>
-                        <a href="https://docs.google.com/document/u/0/" target="_blank"
-                            class="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 font-bold text-sm rounded-lg transition-all flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                </path>
-                            </svg>
-                            Open Google Docs
-                        </a>
-                    </div>
-                </div>
-                {% if script_text %}
-                <div id="scriptContent"
-                    class="bg-slate-50 rounded-lg p-6 font-mono text-sm text-slate-700 leading-relaxed whitespace-pre-wrap border border-slate-200 min-h-[300px]">
-                    {{ script_text }}</div>
-                {% else %}
-                <p class="text-slate-400 italic text-center py-8">No script has been generated for this event yet.</p>
-                {% endif %}
-            </div>
+            self.media_agent = Agent(
+                model=local_llm,
+                name='media_agent',
+                description='Generates media items (scripts, images) for a specific event.',
+                instruction='Use generate_media_for_event for DB links and generate_pollinations_image to create real image URLs.',
+                tools=media_tools
+            )
 
-            {% elif active_tab == 'slideshow' and event.slideShowLink %}
-            {% include 'components/slideshow.html' %}
+            self.social_media_agent = Agent(
+                model=local_llm,
+                name='social_media_agent',
+                description='Creates and evaluates social media posts.',
+                instruction='Craft engaging social media posts. Ask the user, then use send_buffer_social_post to stage them.',
+                tools=other_tools
+            )
 
-            {% elif active_tab == 'meeting' and event.meetingUrl %}
-            <div
-                class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 text-center space-y-4 py-12 flex flex-col items-center">
-                <h3 class="font-bold text-slate-800 uppercase tracking-wider text-xl mb-2">Google Meet Details</h3>
-                <p class="text-slate-500 mb-6 w-full max-w-lg mx-auto">This event has a designated online meeting room
-                    ready for attendees. Click below to join.</p>
+            self.stream_handler_agent = Agent(
+                model=local_llm,
+                name='stream_handler_agent',
+                description='Handles stream initiation logic.',
+                instruction='You act as the automatic handler for starting event streams.',
+                tools=other_tools
+            )
 
-                <div
-                    class="inline-flex flex-col items-center justify-center p-8 mt-4 bg-slate-50 border border-slate-200 rounded-xl w-full max-w-md mx-auto">
-                    <div class="bg-brand-100 text-brand-600 p-4 rounded-full mb-6 relative shadow-inner">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                    </div>
+            self.main_agent = Agent(
+                model=local_llm,
+                name='main_agent',
+                description='The primary orchestrator agent that delegates to sub-agents.',
+                instruction='You are the central coordinator. Parse context (including any Organization ID in the [Context] block) and transfer control to the necessary sub-agent based on user request (planning_agent, media_agent, social_media_agent). Ensure all context, especially IDs, is passed through.',
+                sub_agents=[self.planning_agent, self.media_agent, self.social_media_agent, self.stream_handler_agent]
+            )
 
-                    <span class="text-slate-500 font-mono text-xs uppercase tracking-widest font-bold mb-2">Meeting
-                        Link</span>
-                    <a href="{{ event.meetingUrl }}" target="_blank"
-                        class="text-brand-600 hover:text-brand-700 font-mono text-sm mb-8 break-all transition-colors">{{
-                        event.meetingUrl }}</a>
+            # Performance: Initialize runner once
+            self.session_service = InMemorySessionService()
+            self.runner = Runner(
+                app_name="Eventrio",
+                agent=self.main_agent,
+                session_service=self.session_service,
+                auto_create_session=True
+            )
 
-                    <a href="{{ event.meetingUrl }}" target="_blank"
-                        class="px-8 py-3.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/30 flex items-center gap-3">
-                        Join Meeting Now
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                            </path>
-                        </svg>
-                    </a>
-                </div>
-            </div>
+            print("ADK Agents Initialized successfully with Native + MCP tools.")
+        except Exception as e:
+            print(f"Failed to initialize ADK agents: {str(e)}")
+            self.planning_agent = None
+            self.media_agent = None
+            self.social_media_agent = None
+            self.stream_handler_agent = None
+            self.main_agent = None
 
-            {% elif active_tab == 'contributors' %}
-            <div class="space-y-6">
-                <!-- Header -->
-                <div
-                    class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900">Event Contributors</h3>
-                        <p class="text-slate-500 text-sm">Manage team members and their roles for this event.</p>
-                    </div>
-                    <button onclick="openInviteModal()"
-                        class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-md shadow-brand-200">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        Invite Contributor
-                    </button>
-                </div>
+    def run_agent(self, agent_to_use, prompt: str,fbPageID: str = None, user_id: str = "user_default") -> str:
+        """Utility to run an agent via the official ADK Runner sync interface."""
+        if not self.main_agent or not self.runner:
+            return "Error: Agents not initialized."
 
-                <!-- Contributors List -->
-                <div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-50 border-b border-slate-200">
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Contributor</th>
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Role</th>
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                                        Status</th>
-                                    <th
-                                        class="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">
-                                        Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="contributorsList" class="divide-y divide-slate-100">
-                                <!-- Loaded via JS -->
-                                <tr>
-                                    <td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">
-                                        <div class="flex flex-col items-center gap-3">
-                                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600">
-                                            </div>
-                                            Loading contributors...
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </main>
+        # If we want to run a specific agent directly, we create a temporary runner
+        # or just invoke the main runner if it's the main agent.
+        target_runner = self.runner
+        if agent_to_use != self.main_agent:
+            target_runner = Runner(
+                app_name="EventrioSub",
+                agent=agent_to_use,
+                session_service=InMemorySessionService(),
+                auto_create_session=True
+            )   
+        content = types.Content(role="user", parts=[types.Part(text=prompt)])
 
-    <!-- Invite Contributor Modal -->
-    <div id="inviteModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800">Invite Contributor</h3>
-                <button onclick="closeInviteModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <form id="inviteForm" onsubmit="submitInvitation(event)" class="p-6 space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Email
-                        Address</label>
-                    <input type="email" name="targetEmail" required placeholder="example@gmail.com"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
-                    <select name="roleName" id="roleSelect" required
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
-                        <!-- Options loaded via JS -->
-                    </select>
-                </div>
-                <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
-                        <span>Send Invitation</span>
-                        <div id="inviteSpinner"
-                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
-                        </div>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+        import asyncio
+        import time
+        max_retries = 3
+        delay = 2
 
-    <!-- Edit Role Modal -->
-    <div id="editRoleModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800">Update Contributor Role</h3>
-                <button onclick="closeEditRoleModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <form id="editRoleForm" onsubmit="submitRoleUpdate(event)" class="p-6 space-y-4">
-                <input type="hidden" id="editDocID">
-                <div>
-                    <label
-                        class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Contributor</label>
-                    <div id="editTargetEmail"
-                        class="w-full px-4 py-3 bg-slate-100 text-slate-500 rounded-lg font-medium"></div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
-                    <select name="roleName" id="editRoleSelect" required
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
-                        <!-- Options loaded via JS -->
-                    </select>
-                </div>
-                <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
-                        <span>Update Role</span>
-                        <div id="editSpinner"
-                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
-                        </div>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    <!-- Assign Task Modal -->
-    <div id="assignTaskModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-lg font-bold text-slate-800">Assign Member</h3>
-                <button onclick="closeAssignTaskModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6 space-y-4">
-                <input type="hidden" id="assignTaskID">
-                <div id="collabsContainer" class="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                    <!-- Collaborators loaded via JS -->
-                    <div class="animate-pulse flex flex-col gap-2">
-                        <div class="h-10 bg-slate-100 rounded-lg"></div>
-                        <div class="h-10 bg-slate-100 rounded-lg"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+        async def _run_with_retry():
+            current_delay = delay
+            for attempt in range(max_retries):
+                response_text = ""
+                try:
+                    # Async execution allows us to properly catch API exceptions
+                    async for event in target_runner.run_async(
+                        user_id=user_id,
+                        session_id=f"stateless_{attempt}",
+                        new_message=content
+                    ):
+                        if event.content and event.content.parts:
+                            for part in event.content.parts:
+                                if part.text:
+                                    response_text += part.text
+                    return response_text
+                except Exception as e:
+                    if "503" in str(e) and attempt < max_retries - 1:
+                        print(f"Gemini 503 detected. Retrying {attempt+1}/{max_retries}...")
+                        await asyncio.sleep(current_delay)
+                        current_delay *= 2
+                        continue
+                    return f"Agent Execution Error: {str(e)}"
+            return "Error: Maximum retries reached."
 
-    <!-- Edit Task Modal -->
-    <div id="editTaskModal"
-        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="text-xl font-bold text-slate-800">Edit Task Details</h3>
-                <button onclick="closeEditTaskModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <form id="editTaskForm" onsubmit="submitTaskUpdate(event)" class="p-6 space-y-4">
-                <input type="hidden" id="editTaskID">
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Task
-                        Title</label>
-                    <input type="text" name="title" id="editTaskTitle" required
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-                </div>
-                <div>
-                    <label
-                        class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Description</label>
-                    <textarea name="description" id="editTaskDescription" rows="3"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none resize-none"></textarea>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</label>
-                        <select name="priority" id="editTaskPriority"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-                            <option value="lowest">Lowest</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="critical">Critical</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Status</label>
-                        <select name="status" id="editTaskStatus"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-                            <option value="in progress">In Progress</option>
-                            <option value="done">Done</option>
-                            <option value="under review">Under Review</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Start
-                            Date</label>
-                        <input type="datetime-local" name="startDate" id="editTaskStartDate"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Deadline</label>
-                        <input type="datetime-local" name="deadline" id="editTaskDeadline"
-                            class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
-                    </div>
-                </div>
-                <div class="pt-4">
-                    <button type="submit"
-                        class="w-full py-3 bg-brand-600 text-white font-bold rounded-lg hover:bg-brand-700 transition-all shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
-                        <span>Save Changes</span>
-                        <div id="editTaskSpinner"
-                            class="hidden animate-spin rounded-full h-4 w-4 border-2 border-white/20 border-b-white">
-                        </div>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endblock %}
-{% block scripts %}
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const calendarEl = document.getElementById('calendar');
+        return asyncio.run(_run_with_retry())
 
-        if (calendarEl) {
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                themeSystem: 'standard',
-                height: 'auto',
-                events: [
-                    {% if event_tasks %}
-                        {% for task in event_tasks %}
-        {
-            title: { { task.title | tojson | safe } },
-            start: { { (task.startDate or "") | tojson | safe }},
-    end: { { (task.deadline or "") | tojson | safe } },
-    backgroundColor: '#7c3aed',
-        borderColor: '#6d28d9'
-                        },
-    {% endfor %}
-    {% endif %}
-                ]
-            });
-    calendar.render();
-        }
-    });
-
-    // Copy Script to Clipboard
-    function copyScript() {
-        const scriptText = document.getElementById('scriptContent').innerText;
-        navigator.clipboard.writeText(scriptText).then(() => {
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: 'Copied!',
-                    text: 'Script copied to clipboard.',
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            } else {
-                alert('Script copied to clipboard!');
-            }
-        }).catch(err => {
-            console.error('Failed to copy: ', err);
-            alert('Failed to copy script.');
-        });
-    }
-
-    // Download Media bypass CORS
-    function downloadMedia(url, filename) {
-        fetch(url)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.blob();
-            })
-            .then(blob => {
-                const blobUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = blobUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(blobUrl);
-                document.body.removeChild(a);
-            })
-            .catch(error => {
-                console.error('Download error:', error);
-                // Fallback: open in new tab
-                window.open(url, '_blank');
-            });
-    }
-
-    // Contributors Logic
-    const eventID = "{{ event.id }}";
-    const orgID = "{{ event.orgID }}";
-    const activeTab = "{{ active_tab }}";
-
-    if (activeTab === 'contributors') {
-        loadContributors();
-        loadRoles();
-    }
-
-    async function loadRoles() {
-        try {
-            const response = await fetch('/event-ui/get-roles');
-            const result = await response.json();
-            if (result.message === 'Success') {
-                const selects = ['roleSelect', 'editRoleSelect'];
-                selects.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.innerHTML = result.data.map(role => `<option value="${role}">${role}</option>`).join('');
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Error loading roles:', error);
-        }
-    }
-
-    async function loadContributors() {
-        const listContainer = document.getElementById('contributorsList');
-        try {
-            const response = await fetch(`/event-ui/view-contributors/${eventID}`);
-            const result = await response.json();
-
-            if (result.message === 'Success') {
-                if (result.data.length === 0) {
-                    listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors found.</td></tr>';
-                    return;
-                }
-
-                listContainer.innerHTML = result.data.map(c => `
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="h-8 w-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
-                                    ${(c.targetEmail || '?')[0].toUpperCase()}
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-medium text-slate-700">${c.targetEmail || 'N/A'}</span>
-                                    <span class="text-[10px] text-slate-400 uppercase tracking-tighter">${c.userAccountID || 'Pending Registration'}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <span class="px-2.5 py-1 bg-brand-50 text-brand-600 text-[10px] font-bold rounded-full uppercase tracking-wider border border-brand-100">
-                                ${c.role || 'Member'}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-2">
-                                <div class="h-1.5 w-1.5 rounded-full ${c.accept_stat === true ? 'bg-emerald-500' : 'bg-amber-400'}"></div>
-                                <span class="text-xs ${c.accept_stat === true ? 'text-emerald-600' : 'text-amber-600'} font-medium">
-                                    ${c.accept_stat === true ? 'Accepted' : 'Pending'}
-                                </span>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="openEditRoleModal('${c.id}', '${c.targetEmail || ''}', '${c.role || ''}')" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            } else if (result.message === 'Not Found') {
-                listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors have been added yet.</td></tr>';
-            }
-        } catch (error) {
-            console.error('Error loading contributors:', error);
-            listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-red-500 italic">Failed to load contributors.</td></tr>';
-        }
-    }
-
-    function openInviteModal() {
-        document.getElementById('inviteModal').classList.remove('hidden');
-    }
-
-    function closeInviteModal() {
-        document.getElementById('inviteModal').classList.add('hidden');
-        document.getElementById('inviteForm').reset();
-    }
-
-    async function submitInvitation(event) {
-        event.preventDefault();
-        const spinner = document.getElementById('inviteSpinner');
-        spinner.classList.remove('hidden');
-
-        const formData = new FormData(event.target);
-        const data = {
-            eventID: eventID,
-            orgID: orgID,
-            targetEmail: formData.get('targetEmail'),
-            roleName: formData.get('roleName')
-        };
-
-        try {
-            const response = await fetch('/event-ui/send-invitation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-
-            if (response.ok) {
-                Swal.fire({ title: 'Success!', text: 'Invitation sent successfully.', icon: 'success' });
-                closeInviteModal();
-                loadContributors();
-            } else {
-                Swal.fire({ title: 'Error', text: result.data || 'Failed to send invitation.', icon: 'error' });
-            }
-        } catch (error) {
-            Swal.fire({ title: 'Error', text: 'An unexpected error occurred.', icon: 'error' });
-        } finally {
-            spinner.classList.add('hidden');
-        }
-    }
-
-    function openEditRoleModal(docID, email, currentRole) {
-        document.getElementById('editDocID').value = docID;
-        document.getElementById('editTargetEmail').innerText = email;
-        document.getElementById('editRoleSelect').value = currentRole;
-        document.getElementById('editRoleModal').classList.remove('hidden');
-    }
-
-    function closeEditRoleModal() {
-        document.getElementById('editRoleModal').classList.add('hidden');
-    }
-
-    async function submitRoleUpdate(event) {
-        event.preventDefault();
-        const spinner = document.getElementById('editSpinner');
-        spinner.classList.remove('hidden');
-
-        const docID = document.getElementById('editDocID').value;
-        const roleName = document.getElementById('editRoleSelect').value;
-
-        try {
-            const response = await fetch(`/event-ui/update-contributor-role/${docID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ roleName: roleName })
-            });
-            const result = await response.json();
-
-            if (response.ok) {
-                Swal.fire({ title: 'Updated!', text: 'Contributor role updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
-                closeEditRoleModal();
-                loadContributors();
-            } else {
-                Swal.fire({ title: 'Error', text: result.data || 'Failed to update role.', icon: 'error' });
-            }
-        } catch (error) {
-            Swal.fire({ title: 'Error', text: 'An unexpected error occurred.', icon: 'error' });
-        } finally {
-            spinner.classList.add('hidden');
-        }
-    }
-
-    // Task Assignment & Edit Logic
-    let acceptedCollabs = [];
-
-    async function loadTaskCollabs() {
-        try {
-            const response = await fetch(`/event-ui/get-collabs-dropdown/${eventID}`);
-            const result = await response.json();
-            if (result.message === "Success") {
-                acceptedCollabs = result.data;
-                resolveAssigneeNames();
-            }
-        } catch (error) {
-            console.error('Error loading task collabs:', error);
-        }
-    }
-
-    function resolveAssigneeNames() {
-        const containers = document.querySelectorAll('[id^="assignee-"]');
-        containers.forEach(container => {
-            const taskId = container.id.replace('assignee-', '');
-            const li = container.closest('li');
-            const taskData = JSON.parse(li.dataset.taskData);
-            const assignedTo = taskData.assigned_to;
-
-            if (assignedTo && assignedTo !== 'NONE') {
-                const collab = acceptedCollabs.find(c => c.userAccID === assignedTo);
-                if (collab) {
-                    container.innerHTML = `
-                        <div class="w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-[8px] font-bold border border-brand-200">
-                            ${collab.personName[0].toUpperCase()}
-                        </div>
-                        <span class="text-[10px] font-medium text-slate-700">${collab.personName}</span>
-                    `;
-                }
-            }
-        });
-    }
-
-    function openAssignTaskModal(taskID) {
-        document.getElementById('assignTaskID').value = taskID;
-        const container = document.getElementById('collabsContainer');
-
-        if (acceptedCollabs.length === 0) {
-            container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4 italic">No accepted collaborators found.</p>';
-        } else {
-            container.innerHTML = acceptedCollabs.map(c => `
-                <button onclick="submitTaskAssignment('${taskID}', '${c.userAccID}')" 
-                    class="w-full flex items-center gap-3 p-3 hover:bg-brand-50 rounded-xl transition-all border border-transparent hover:border-brand-100 text-left group">
-                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
-                        ${c.personName[0].toUpperCase()}
-                    </div>
-                    <div class="flex-1">
-                        <p class="text-sm font-bold text-slate-700 group-hover:text-brand-700">${c.personName}</p>
-                        <p class="text-[10px] text-slate-400 font-medium">${c.email}</p>
-                    </div>
-                </button>
-            `).join('');
-        }
-        document.getElementById('assignTaskModal').classList.remove('hidden');
-    }
-
-    function closeAssignTaskModal() {
-        document.getElementById('assignTaskModal').classList.add('hidden');
-    }
-
-    async function submitTaskAssignment(taskID, userID) {
-        Swal.fire({ title: 'Assigning...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
-        try {
-            const response = await fetch(`/event-ui/assign-task/${taskID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userID: userID })
-            });
-            const result = await response.json();
-            if (response.ok) {
-                Swal.fire({ title: 'Assigned!', text: 'User assigned to task successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
-                closeAssignTaskModal();
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                throw new Error(result.data || "Assignment failed");
-            }
-        } catch (error) {
-            Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
-        }
-    }
-
-    function openEditTaskModal(task, docID) {
-        document.getElementById('editTaskID').value = docID;
-        document.getElementById('editTaskTitle').value = task.title;
-        document.getElementById('editTaskDescription').value = task.description || '';
-        document.getElementById('editTaskPriority').value = task.priority || 'medium';
-        document.getElementById('editTaskStatus').value = task.status || 'in progress';
-
-        if (task.startDate) {
-            const start = new Date(task.startDate.$date || task.startDate);
-            document.getElementById('editTaskStartDate').value = start.toISOString().slice(0, 16);
-        } else {
-            document.getElementById('editTaskStartDate').value = '';
-        }
-
-        if (task.deadline) {
-            const deadline = new Date(task.deadline.$date || task.deadline);
-            document.getElementById('editTaskDeadline').value = deadline.toISOString().slice(0, 16);
-        } else {
-            document.getElementById('editTaskDeadline').value = '';
-        }
-
-        document.getElementById('editTaskModal').classList.remove('hidden');
-    }
-
-    function closeEditTaskModal() {
-        document.getElementById('editTaskModal').classList.add('hidden');
-    }
-
-    async function submitTaskUpdate(event) {
-        event.preventDefault();
-        const taskID = document.getElementById('editTaskID').value;
-        const spinner = document.getElementById('editTaskSpinner');
-        spinner.classList.remove('hidden');
-
-        const formData = new FormData(event.target);
-        const data = {};
-        formData.forEach((value, key) => { if (value) data[key] = value; });
-
-        try {
-            const response = await fetch(`/event-ui/update-task/${taskID}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
-            if (response.ok) {
-                Swal.fire({ title: 'Updated!', text: 'Task updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
-                closeEditTaskModal();
-                setTimeout(() => location.reload(), 1500);
-            } else {
-                throw new Error(result.data || "Update failed");
-            }
-        } catch (error) {
-            Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
-        } finally {
-            spinner.classList.add('hidden');
-        }
-    }
-
-    // Initialize Task Data
-    if (activeTab === 'tasks') {
-        loadTaskCollabs();
-    }
-</script>
-{% endblock %}
+agent_manager = EventAgentsManager()
