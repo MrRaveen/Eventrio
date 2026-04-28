@@ -97,6 +97,7 @@ Eventrio simplifies event management through intelligent automation:
 4.  **Configuration**
     Create a `.env` file in the root directory and add the following keys:
     ```env
+    APP_STATUS=Development # use "Production","Development","LiveModels"
     MONGO_URI=your_mongodb_uri
     CLOUDINARY_CLOUD_NAME=your_name
     CLOUDINARY_API_KEY=your_key
