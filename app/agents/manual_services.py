@@ -1,15 +1,18 @@
-from app.models.tasks import tasks
-import cloudinary
-from app.models.projects import Projects
-from app.models.userAcc import userAcc
-import uuid
-import requests
-import json
 import io
+import json
 import os
 import tempfile
+import uuid
 from urllib.parse import quote
-from mdtopptx import parse_markdown, create_ppt
+
+import cloudinary
+import requests
+from mdtopptx import create_ppt, parse_markdown
+
+from app.models.projects import Projects
+from app.models.tasks import tasks
+from app.models.userAcc import userAcc
+
 
 #create the event in the DB
 def create_event(name: str, description: str, org_id: str, owner_id: str, start_time: str = None, end_time: str = None) -> str:
@@ -17,8 +20,8 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
     user = userAcc.objects(sub=owner_id).first()
     if not user:
         return f"Error: User not found with ID {owner_id}"
-    if user.limits.projectsCount >= 5 and user.payments.tier == 'free':
-        return "Error: Free tier limit of 5 projects reached. Please upgrade to create more."
+    # if user.limits.projectsCount >= 5 and user.payments.tier == 'free':
+    #     return "Error: Free tier limit of 5 projects reached. Please upgrade to create more."
     project = Projects(
         name=name,
         description=description,
@@ -37,16 +40,23 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
     user.limits.projectsCount += 1
     user.save()
     # return f"Successfully created event '{name}' with ID: {str(project.id)}."
-    return f"{str(project.id)}"
-
+    # return f"{str(project.id)}"
+    event_id_str = str(project.id)
+    return f"SUCCESS: Event created. The event_id is: {event_id_str}. You MUST use this exact event_id ({event_id_str}) in all subsequent function calls (generate_media_for_event, create_google_doc_for_event, save_tasks_to_db)."
 #create media
 def generate_media_for_event(event_id: str, script_context: str) -> str:
     """Creates real media assets and links them to an event."""
-    import requests
+    import io
+    import re
+    from urllib.parse import quote
+
     import cloudinary
     import cloudinary.uploader
-    from urllib.parse import quote
-    import io
+    import requests
+    # Validate ObjectId format
+    if not re.match(r'^[a-f0-9]{24}$', str(event_id)):
+        return f"Error: Invalid event_id '{event_id}'. It must be a 24-character hex string from create_event."
+
     project = Projects.objects(id=event_id).first()
     if not project:
         return f"Error: Event {event_id} not found."
@@ -81,9 +91,13 @@ def generate_media_for_event(event_id: str, script_context: str) -> str:
 #create the google doc part
 def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) -> str:
     user = userAcc.objects(sub=owner_id).first()
-    if not user or not user.oauthToken: return "Error: No Google Auth token found."
-    token = user.oauthToken.get('access_token')
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    if not user:
+        return "Error: User not found. Please log in again."
+    if not user.oauthToken:
+        return "Error: Google account not connected. Please connect your Google account in Settings."
+    if not user.oauthToken.get('access_token'):
+        return "Error: Google access token expired. Please reconnect your Google account."
+    headers = {"Authorization": f"Bearer {user.oauthToken.get('access_token')}", "Content-Type": "application/json"}
     #Create empty document
     res = requests.post("https://docs.googleapis.com/v1/documents", headers=headers, json={"title": f"Event Plan: {event_id}"})
     if res.status_code != 200: return f"Error creating doc: {res.text}"
@@ -104,18 +118,20 @@ def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) ->
     return f"Successfully created your Google Doc: {doc_link}"
 
 #create google meet link
-def automate_google_meet(user_access_token, event_details):
-    if not user_access_token or not event_details:
-        return {"error": "Missing access token or event details."}
-        
+def automate_google_meet(owner_id: str, event_details: dict):
+    user = userAcc.objects(sub=owner_id).first()
+    if not user or not user.oauthToken or not user.oauthToken.get('access_token'):
+        return {"error": "Google authentication missing or expired for this user."}
+    
+    user_access_token = user.oauthToken.get('access_token')
     url = "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1"
     headers = {"Authorization": f"Bearer {user_access_token}"}
-    
+
     try:
         title = event_details.get('title', 'Eventrio Meeting')
         start_time = event_details.get('start_time')
         end_time = event_details.get('end_time')
-        
+
         if not start_time or not end_time:
             return {"error": "Start time and end time are required for a meeting."}
 
@@ -130,9 +146,9 @@ def automate_google_meet(user_access_token, event_details):
                 }
             }
         }
-        
+
         response = requests.post(url, headers=headers, json=payload, timeout=10)
-        
+
         if response.status_code in (200, 201):
             data = response.json()
             link = data.get('hangoutLink')
@@ -145,21 +161,26 @@ def automate_google_meet(user_access_token, event_details):
         return {"error": f"Failed to automate Google Meet: {str(e)}"}
 
 #post fb posts
-def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
+def post_image_to_facebook_page(owner_id, page_id, message, image_url=None):
+    user = userAcc.objects(sub=owner_id).first()
+    if not user or not user.socialMediaTokens or not user.socialMediaTokens.facebook:
+        return {"error": "Facebook token missing for this user. Please connect Facebook in Settings."}
+    
+    user_token = user.socialMediaTokens.facebook
     if page_id:
-        #Get the Page Access Token 
+        #Get the Page Access Token
         accounts_url = f"https://graph.facebook.com/v19.0/me/accounts?access_token={user_token}"
         try:
             accounts_data = requests.get(accounts_url).json()
         except Exception as e:
             return {"error": f"Failed: Could not reach Facebook API. {str(e)}"}
-        
+
         page_token = None
         for page in accounts_data.get('data', []):
             if page.get('id') == page_id:
                 page_token = page.get('access_token')
                 break
-                
+
         if not page_token:
             return {"error": "Failed: Page not found or permissions missing."}
 
@@ -186,7 +207,12 @@ def post_image_to_facebook_page(user_token, page_id, message, image_url=None):
 def schedule_real_google_calendar(owner_id: str, event_name: str, start_time: str, end_time: str) -> str:
     """Schedule the event directly into the user's Google Calendar natively."""
     user = userAcc.objects(sub=owner_id).first()
-    if not user or not user.oauthToken: return "Error: No Google Auth token found."
+    if not user:
+        return "Error: User not found. Please log in again."
+    if not user.oauthToken:
+        return "Error: Google account not connected. Please connect your Google account in Settings."
+    if not user.oauthToken.get('access_token'):
+        return "Error: Google access token expired. Please reconnect your Google account."
     token = user.oauthToken.get('access_token')
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
     payload = {
@@ -200,10 +226,10 @@ def schedule_real_google_calendar(owner_id: str, event_name: str, start_time: st
     return f"Successfully scheduled Event in your calendar! Link: {event_link}"
 
 #create slides using the markdown
-def create_slides(markdown_text: str):
+def create_slides(markdown_text: str,eventID : str):
     if not markdown_text:
         return {"link": None, "error": "Markdown text is empty."}
-    
+
     temp_path = None
     try:
         parsed_slides = parse_markdown(markdown_text)
@@ -223,7 +249,7 @@ def create_slides(markdown_text: str):
         #Read the file into a Python variable
         with open(temp_path, 'rb') as f:
             pptx_memory_file = io.BytesIO(f.read())
-            
+
         #Reset the stream position so it can be read by other functions
         pptx_memory_file.seek(0)
         #upload the file to cloud
@@ -231,13 +257,21 @@ def create_slides(markdown_text: str):
             pptx_memory_file,
             folder="eventrio_media",
             resource_type="raw",
-            format="pptx",                   
+            format="pptx",
             public_id="eventrio_presentation"
         )
         final_cloudinary_url = upload_result.get('secure_url')
         if not final_cloudinary_url:
             return {"link": None, "error": "Cloudinary upload failed to return a URL."}
-            
+
+        #saving the url    
+        currentProject = Projects.objects(id=eventID).first()
+        currentProject.slideShowLink = final_cloudinary_url
+        try:
+            currentProject.save()
+        except Exception as db_e:
+            print(f"Error saving Slide Show Link to Project: {db_e}")
+
         return {"link": final_cloudinary_url, "error": None}
 
     except Exception as e:
@@ -251,15 +285,29 @@ def create_slides(markdown_text: str):
 
 #save tasks to DB
 def save_tasks_to_db(owner_id: str, event_id: str,org_id:str, tasks_data_json: str) -> str:
+    import re
+    # Validate ObjectId format
+    if not re.match(r'^[a-f0-9]{24}$', str(event_id)):
+        return f"Error: Invalid event_id '{event_id}'. It must be a 24-character hex string from create_event."
     project = Projects.objects(id=event_id).first()
     if not project: return "Error: Event not found."
     try:
-        tasks_data = json.loads(tasks_data_json)
+        if isinstance(tasks_data_json, str):
+            tasks_data = json.loads(tasks_data_json)
+        else:
+            tasks_data = tasks_data_json
+            
+        # Handle if model wraps the list in a "tasks" or "task_list" key
+        if isinstance(tasks_data, dict):
+            for key in ["tasks", "task_list", "items"]:
+                if key in tasks_data and isinstance(tasks_data[key], list):
+                    tasks_data = tasks_data[key]
+                    break
     except Exception as e:
         return f"Error: Invalid JSON format for tasks_data_json. {e}"
 
     if not isinstance(tasks_data, list):
-        return "Error: tasks_data_json must be a JSON array."
+        return "Error: tasks_data_json must be a JSON array or an object containing a list under 'tasks'."
     new_tasks = []
     for item in tasks_data:
         newTask = tasks(
@@ -289,8 +337,3 @@ def save_tasks_to_db(owner_id: str, event_id: str,org_id:str, tasks_data_json: s
         #         "isCompleted": False
         #     })
     return f"Successfully saved {len(tasks_data)} tasks to MongoDB."
-
-
-
-
-

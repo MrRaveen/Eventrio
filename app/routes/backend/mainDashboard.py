@@ -1,11 +1,9 @@
 from datetime import datetime, timezone
-from app.responseDto.getEventsForAdminRes import getEventsForAdminRes
-from app.responseDto.allCollabsRes import allCollabsRes
-from app.models.contributors import contributors
-from app.models.participants import Participants
-from app.models.posts import Posts
-from app.requestsDto.createOrgReq import createOrgReq
-from pydantic import ValidationError
+from urllib.parse import urlparse
+
+import cloudinary.uploader
+import requests
+from bson import ObjectId
 from flask import (
     Blueprint,
     jsonify,
@@ -13,17 +11,22 @@ from flask import (
     render_template,
     request,
     session,
-    url_for
+    url_for,
 )
-from urllib.parse import urlparse
-import cloudinary.uploader
-import requests
-from bson import ObjectId
 from mongoengine import get_connection
+from pydantic import ValidationError
+
 from app.agents.agent_manager import agent_manager
+from app.agents.sequential_agents import sequential_agents
+from app.models.contributors import contributors
 from app.models.organizations import Organizations
+from app.models.participants import Participants
+from app.models.posts import Posts
 from app.models.projects import Projects
 from app.models.userAcc import userAcc
+from app.requestsDto.createOrgReq import createOrgReq
+from app.responseDto.allCollabsRes import allCollabsRes
+from app.responseDto.getEventsForAdminRes import getEventsForAdminRes
 
 main_dashboard = Blueprint('main_dashboard', __name__)
 
@@ -53,11 +56,11 @@ def create_org():
         user = userAcc.objects(sub=user_id).first()
         if user:
             user.limits.orgCount += 1
-            user.save()  
+            user.save()
         return jsonify({
                 "message": "Success",
                 "data": "Organization is created successfully"
-            }), 201  
+            }), 201
     except ValidationError as e:
         return jsonify({
                 "message": "error",
@@ -67,7 +70,7 @@ def create_org():
         return jsonify({
                 "message": "error",
                 "data": f"An error occurred: {str(e)}"
-            }), 500  
+            }), 500
 
 #update org
 @main_dashboard.route('/update-org/<string:org_id>', methods=['PUT'])
@@ -98,7 +101,7 @@ def update_org(org_id):
         return jsonify({
                 "message": "Success",
                 "data": "Organization is updated successfully"
-            }), 200  
+            }), 200
     except ValidationError as e:
         return jsonify({
                 "message": "error",
@@ -108,7 +111,7 @@ def update_org(org_id):
         return jsonify({
                 "message": "error",
                 "data": f"An error occurred: {str(e)}"
-            }), 500  
+            }), 500
 
 #remove org
 @main_dashboard.route('/remove-org/<string:org_id>', methods=["DELETE"])
@@ -164,7 +167,7 @@ def remove_org(org_id):
                                 if '/upload/' in path:
                                     parts = path.split('/upload/')[-1].split('/')
                                     if parts[0].startswith('v') and parts[0][1:].isdigit():
-                                        parts.pop(0)    
+                                        parts.pop(0)
                                     public_id_with_ext = '/'.join(parts)
                                     public_id = public_id_with_ext.rsplit('.', 1)[0]
                                     cloudinary.uploader.destroy(public_id)
@@ -185,7 +188,7 @@ def remove_org(org_id):
                                 cloudinary.uploader.destroy(public_id, resource_type="raw")
                         except Exception as cloud_e:
                             print(f"Cloudinary deletion failed for slideshow {fo.slideShowLink}: {cloud_e}")
-                                
+
                 allPosts = Posts.objects(orgID=org_id)
                 if fbToken:
                     for post in allPosts:
@@ -201,7 +204,7 @@ def remove_org(org_id):
 
                 Projects._get_collection().delete_many({"orgID": org_id}, session=mongo_session)
                 Posts._get_collection().delete_many({"orgID": org_id}, session=mongo_session)
-                Participants._get_collection().delete_many({"orgID": org_id}, session=mongo_session) 
+                Participants._get_collection().delete_many({"orgID": org_id}, session=mongo_session)
 
         return jsonify({
             "message": "success",
@@ -213,7 +216,7 @@ def remove_org(org_id):
                 "data": f"Transaction failed or an error occurred: {str(e)}"
         }), 500
 
-        
+
 #get all the projects according to org ID
 @main_dashboard.route('/get-org-projects/<string:org_id>')
 def get_org_events(org_id):
@@ -237,20 +240,16 @@ def chat_main():
     data = request.json
     prompt = data.get('prompt')
     fbPageID = data.get('fbPageID')
+    orgID = data.get('orgID')
     if not prompt:
         return jsonify({"error": "Prompt required"}), 400
-    if not getattr(agent_manager, 'main_agent', None):
-        return jsonify({"error": "Main agent not initialized"}), 500
+    if not orgID:
+        return jsonify({"error": "Organization ID required"}), 400
+
     user_id = session.get('user_id', 'unknown_user')
-    
-    system_context = f"User executing this is '{user_id}'. You can use this ID for owner_id in tools."
-    if fbPageID:
-        system_context += f" The selected Facebook Page ID (fbPageID) is '{fbPageID}'."
-        
-    enriched_prompt = f"[System: {system_context}] User Request: {prompt}"
-    
+
     try:
-        response = agent_manager.run_agent(agent_manager.main_agent, prompt=enriched_prompt, fbPageID=fbPageID, user_id=user_id)
+        response = sequential_agents.run_full_pipeline(prompt=prompt, user_id=user_id, org_id=orgID, fbPageID=fbPageID)
         return jsonify({"response": response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -294,7 +293,7 @@ def trigger_stream_agent():
         response = agent_manager.run_agent(agent_manager.stream_handler_agent, prompt, user_id)
         return jsonify({"response": response})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500        
+        return jsonify({"error": str(e)}), 500
 
 # @main_dashboard.route('/plan-event', methods=['POST'])
 # def chat_planning():
@@ -320,7 +319,7 @@ def social_status():
         user = userAcc.objects(sub=user_id).first()
         if not user:
             return jsonify({"error": "User not found"}), 404
-        
+
         tokens = user.socialMediaTokens
         status = {
             "facebook": bool(tokens and tokens.facebook and tokens.facebook != ""),
@@ -360,7 +359,7 @@ def getCollabs():
         user_email = session.get('user_email')
         if not user_email:
             return jsonify({
-                "message": "Unauthorized", 
+                "message": "Unauthorized",
                 "data": "User email not found in session."
             }), 401
 
@@ -369,7 +368,7 @@ def getCollabs():
 
         for col in allCollabs:
             project = Projects.objects(id=col.eventID).first()
-            
+
             # Skip iterations where referenced entities might have been deleted
             if not project:
                 continue
@@ -391,18 +390,18 @@ def getCollabs():
                 orgID=col.orgID,
                 role=col.role or "Unassigned"
             )
-            
+
             # .model_dump() is for Pydantic V2. Use .dict() if using Pydantic V1.
             response_list.append(collab_data.model_dump())
 
         return jsonify({
-            "message": "Success", 
+            "message": "Success",
             "data": response_list
         }), 200
 
     except Exception as e:
         return jsonify({
-            "message": "Internal Server Error", 
+            "message": "Internal Server Error",
             "data": str(e)
         }), 500
 
@@ -412,7 +411,7 @@ def acceptCollab(docID):
     try:
         if not docID or not docID.strip():
             return jsonify({
-                "message": "Validation Error", 
+                "message": "Validation Error",
                 "data": "Document ID is required."
             }), 400
 
@@ -420,19 +419,19 @@ def acceptCollab(docID):
 
         if not collab:
             return jsonify({
-                "message": "Not Found", 
+                "message": "Not Found",
                 "data": "Collaboration record not found."
             }), 404
 
         if collab.accept_stat:
             return jsonify({
-                "message": "Conflict", 
+                "message": "Conflict",
                 "data": "Collaboration is already accepted."
             }), 409
 
         # Update status
         collab.accept_stat = True
-        
+
         # Link user account ID since they are accepting via their logged-in session
         user_id = session.get('user_id')
         if user_id:
@@ -441,18 +440,18 @@ def acceptCollab(docID):
         collab.save()
 
         return jsonify({
-            "message": "Success", 
+            "message": "Success",
             "data": "Collaboration accepted successfully."
         }), 200
 
     except ValidationError:
         return jsonify({
-            "message": "Validation Error", 
+            "message": "Validation Error",
             "data": "Invalid Document ID format."
         }), 400
     except Exception as e:
         return jsonify({
-            "message": "Internal Server Error", 
+            "message": "Internal Server Error",
             "data": str(e)
         }), 500
 
@@ -462,7 +461,7 @@ def acceptCollab(docID):
 def getListEvents():
     try:
         user_id = session.get('user_id')
-        
+
         if not user_id:
             return jsonify({
                 "message": "Unauthorized",
@@ -483,7 +482,7 @@ def getListEvents():
             # Ensure project_end is timezone-aware for comparison
             if project_end and project_end.tzinfo is None:
                 project_end = project_end.replace(tzinfo=timezone.utc)
-            
+
             if project_end and now > project_end:
                 status = "COMPLETED"
             elif project.isEventStarted:
@@ -502,7 +501,7 @@ def getListEvents():
                 endDate=project.endDate if project.endDate else project.startDate,
                 eventStatus=status
             )
-            
+
             response_list.append(event_res.model_dump())
 
         return jsonify({
@@ -515,5 +514,3 @@ def getListEvents():
             "message": "Internal Server Error",
             "data": str(e)
         }), 500
-
-

@@ -71,7 +71,8 @@ class Runner:
 
             #create slides
             slide_result = create_slides(
-                markdown_text=os.getenv('TEST_MOCK_SLIDESHOW_MD')
+                markdown_text=os.getenv('TEST_MOCK_SLIDESHOW_MD'),
+                eventID=currentProject.id
             )
             if isinstance(slide_result, dict) and slide_result.get('link'):
                 currentProject.slideShowLink = slide_result['link']
