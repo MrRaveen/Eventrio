@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="min-h-screen bg-slate-50 text-slate-900 py-20 px-4 transition-colors duration-200">
+<div class="min-h-screen bg-white text-slate-800 py-20 px-4 transition-colors duration-200">
     <div class="max-w-6xl mx-auto">
 
         <div class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">Simple, Transparent Pricing</h1>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800 mb-4">Simple, Transparent Pricing</h1>
             <p class="text-xl text-slate-500 max-w-2xl mx-auto">Choose the perfect plan for your event organization
                 needs. No hidden fees, just pure automation.</p>
         </div>
 
-        <div class="max-w-3xl mx-auto mb-16 p-6 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div class="max-w-3xl mx-auto mb-16 p-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
             <p class="font-bold text-slate-800 mb-4 flex items-center justify-center gap-2">
                 <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -20,7 +20,7 @@
             <div class="flex flex-wrap justify-center gap-3">
                 {% for service in ['Buffer', 'Cloudinary', 'Google Calendar', 'Notion', 'Google Meet'] %}
                 <span
-                    class="px-3 py-1 bg-slate-50 border border-slate-100 rounded text-xs font-bold text-slate-600 uppercase tracking-tighter">{{
+                    class="px-3 py-1 bg-white border border-slate-100 rounded text-xs font-bold text-slate-600 uppercase tracking-tighter">{{
                     service }}</span>
                 {% endfor %}
             </div>
@@ -33,12 +33,12 @@
             <div
                 class="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                 <div
-                    class="absolute top-0 right-0 bg-brand-50 text-brand-700 text-[10px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">
+                    class="absolute top-0 right-0 bg-brand-100 text-brand-800 font-semibold text-[10px] font-black px-3 py-1 rounded-bl-lg uppercase tracking-widest">
                     Active MVP</div>
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Free Plan</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Free Plan</h3>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-4xl font-black text-slate-900">$0</span>
+                        <span class="text-4xl font-black text-slate-800">$0</span>
                         <span class="text-slate-500">/mo</span>
                     </div>
                 </div>
@@ -78,14 +78,14 @@
             </div>
 
             <div
-                class="bg-white border-2 border-brand-500 rounded-2xl p-8 flex flex-col shadow-xl relative transform scale-105 z-10 transition-transform">
+                class="bg-white border-2 border-brand-500 rounded-2xl p-8 flex flex-col shadow-premium relative transform scale-105 z-10 transition-transform">
                 <div
                     class="absolute -top-4 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-4 py-1 rounded-full text-xs font-black uppercase tracking-widest shadow-lg">
                     Upgrade Now</div>
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Pro Plan</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Pro Plan</h3>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-4xl font-black text-slate-900">$20</span>
+                        <span class="text-4xl font-black text-slate-800">$20</span>
                         <span class="text-slate-500">/mo</span>
                     </div>
                 </div>
@@ -131,9 +131,9 @@
             <div
                 class="bg-white border border-slate-200 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-shadow">
                 <div class="mb-8">
-                    <h3 class="text-xl font-bold text-slate-900 mb-2">Ultimate Plan</h3>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Ultimate Plan</h3>
                     <div class="flex items-baseline gap-1">
-                        <span class="text-4xl font-black text-slate-900">$50</span>
+                        <span class="text-4xl font-black text-slate-800">$50</span>
                         <span class="text-slate-500">/mo</span>
                     </div>
                 </div>
@@ -164,7 +164,7 @@
                     <input type="hidden" name="planName" value="Ultimate Plan">
                     <input type="hidden" name="planAmount" value="5000">
                     <button type="submit"
-                        class="w-full py-3 px-6 rounded-lg font-bold border-2 border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Subscribe
+                        class="w-full py-3 px-6 rounded-lg font-bold border-2 border-slate-200 text-slate-600 hover:bg-white transition-colors">Subscribe
                         to Ultimate</button>
                 </form>
             </div>

@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="flex h-screen w-full bg-slate-50 overflow-hidden text-slate-900 transition-colors duration-200">
+<div class="flex h-screen w-full overflow-hidden" style="background:var(--bg-body); color:var(--text-primary);">
 
     <!-- Sidebar -->
     {% include 'components/dashboard/sidebar.html' %}
 
     <!-- Main Workspace -->
-    <main class="flex-1 overflow-y-auto p-6 md:p-10">
+    <main class="flex-1 overflow-y-auto p-6 md:p-10" style="background:var(--bg-body);">
         <div class="max-w-5xl mx-auto space-y-8">
-            <header class="border-b border-slate-200 pb-6 flex flex-wrap items-center justify-between gap-4">
+            <header class="pb-6 flex flex-wrap items-center justify-between gap-4" style="border-bottom:1px solid var(--border);">
                 <div>
-                    <h2 class="text-3xl font-extrabold text-slate-900 flex items-center gap-3">
+                    <h2 class="text-3xl font-extrabold flex items-center gap-3" style="color:var(--text-primary);">
                         {{ event.name }}
                         {% if event.isEventStarted %}
                         <span
@@ -193,7 +193,7 @@
                     return;
                 }
                 listContainer.innerHTML = result.data.map(c => `
-                    <tr class="hover:bg-slate-50/50 transition-colors">
+                    <tr class="hover:bg-white/50 transition-colors">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="h-8 w-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
@@ -408,7 +408,7 @@
                 const displayName = c.personName || 'Unnamed User';
                 return `
                 <button onclick="submitTaskAssignment('${taskID}', '${c.userAccID}')" 
-                    class="w-full flex items-center gap-3 p-3 hover:bg-brand-50 rounded-xl transition-all border border-transparent hover:border-brand-100 text-left group">
+                    class="w-full flex items-center gap-3 p-3 hover:bg-brand-50 rounded-2xl transition-all border border-transparent hover:border-brand-100 text-left group">
                     <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
                         ${displayChar}
                     </div>

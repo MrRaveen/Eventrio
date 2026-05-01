@@ -1,10 +1,10 @@
 <!-- Media Tab Component -->
-<div class="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6">
+<div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden p-6">
     <h3 class="font-bold text-slate-800 uppercase tracking-wider text-sm mb-6">Generated Media</h3>
     {% if event.mediaLinks and event.mediaLinks|length > 0 %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for link in event.mediaLinks %}
-        <div class="group relative rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+        <div class="group relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
             <img src="{{ link }}" alt="Event Media"
                 class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105">
             <div

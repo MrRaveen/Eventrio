@@ -3,8 +3,8 @@
 <!-- =============================== -->
 <div id="inviteModal"
     class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div class="bg-white rounded-2xl shadow-premium w-full max-w-md overflow-hidden transform transition-all">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
             <h3 class="text-xl font-bold text-slate-800">Invite Contributor</h3>
             <button onclick="closeInviteModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -18,12 +18,12 @@
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Email
                     Address</label>
                 <input type="email" name="targetEmail" required placeholder="example@gmail.com"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
             </div>
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
                 <select name="roleName" id="roleSelect" required
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
                     <!-- Options loaded via JS -->
                 </select>
             </div>
@@ -45,8 +45,8 @@
 <!-- =============================== -->
 <div id="editRoleModal"
     class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div class="bg-white rounded-2xl shadow-premium w-full max-w-md overflow-hidden transform transition-all">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
             <h3 class="text-xl font-bold text-slate-800">Update Contributor Role</h3>
             <button onclick="closeEditRoleModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@
             <div>
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Role</label>
                 <select name="roleName" id="editRoleSelect" required
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
+                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all">
                     <!-- Options loaded via JS -->
                 </select>
             </div>
@@ -87,8 +87,8 @@
 <!-- =============================== -->
 <div id="assignTaskModal"
     class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div class="bg-white rounded-2xl shadow-premium w-full max-w-sm overflow-hidden transform transition-all">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
             <h3 class="text-lg font-bold text-slate-800">Assign Member</h3>
             <button onclick="closeAssignTaskModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,8 +115,8 @@
 <!-- =============================== -->
 <div id="editTaskModal"
     class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all">
-        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+    <div class="bg-white rounded-2xl shadow-premium w-full max-w-lg overflow-hidden transform transition-all">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white/50">
             <h3 class="text-xl font-bold text-slate-800">Edit Task Details</h3>
             <button onclick="closeEditTaskModal()" class="text-slate-400 hover:text-slate-600 transition-colors">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,20 +131,20 @@
                 <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Task
                     Title</label>
                 <input type="text" name="title" id="editTaskTitle" required
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
             </div>
             <div>
                 <label
                     class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Description</label>
                 <textarea name="description" id="editTaskDescription" rows="3"
-                    class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none resize-none"></textarea>
+                    class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none resize-none"></textarea>
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label
                         class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Priority</label>
                     <select name="priority" id="editTaskPriority"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
                         <option value="lowest">Lowest</option>
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -156,7 +156,7 @@
                     <label
                         class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Status</label>
                     <select name="status" id="editTaskStatus"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
                         <option value="in progress">In Progress</option>
                         <option value="done">Done</option>
                         <option value="under review">Under Review</option>
@@ -169,13 +169,13 @@
                     <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Start
                         Date</label>
                     <input type="datetime-local" name="startDate" id="editTaskStartDate"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
                 <div>
                     <label
                         class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Deadline</label>
                     <input type="datetime-local" name="deadline" id="editTaskDeadline"
-                        class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
+                        class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
             </div>
             <div class="pt-4">

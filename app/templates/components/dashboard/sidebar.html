@@ -1,92 +1,60 @@
 <!-- Sidebar Navigation Component -->
-<aside class="w-20 lg:w-64 bg-white border-r border-slate-200 flex flex-col flex-shrink-0 transition-all duration-300">
-    <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-200">
-        <span class="text-lg font-bold hidden lg:block text-brand-700">Event Dashboard</span>
-        <span class="text-xl font-bold lg:hidden text-brand-600">ED</span>
+<aside class="w-20 lg:w-64 flex flex-col flex-shrink-0 transition-all duration-300" style="background:var(--bg-sidebar); border-right:1px solid var(--border);">
+    <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6" style="border-bottom:1px solid var(--border);">
+        <span class="text-lg font-bold hidden lg:block" style="color:var(--brand-text);">Event Dashboard</span>
+        <span class="text-xl font-bold lg:hidden" style="color:var(--brand-solid);">ED</span>
     </div>
     <nav class="flex-1 px-2 lg:px-3 py-6 space-y-1 overflow-y-auto w-full overflow-x-hidden">
         <!-- Tasks -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='tasks') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'tasks' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
-                </path>
-            </svg>
+            class="nav-link {% if active_tab == 'tasks' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Tasks</span>
         </a>
         <!-- Calendar -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='calendar') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'calendar' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                </path>
-            </svg>
+            class="nav-link {% if active_tab == 'calendar' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Calendar</span>
         </a>
-        <!-- Media post generation -->
+        <!-- Media -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='media') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'media' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
-                </path>
-            </svg>
+            class="nav-link {% if active_tab == 'media' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Media Generation</span>
         </a>
         <!-- Script -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='script') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'script' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                </path>
-            </svg>
+            class="nav-link {% if active_tab == 'script' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Script</span>
         </a>
         {% if event.meetingUrl %}
-        <!-- Online Meeting -->
+        <!-- Meeting -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='meeting') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'meeting' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
-                </path>
-            </svg>
+            class="nav-link {% if active_tab == 'meeting' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Online Meeting</span>
         </a>
         {% endif %}
         {% if event.slideShowLink %}
         <!-- Slideshow -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='slideshow') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'slideshow' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+            class="nav-link {% if active_tab == 'slideshow' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Slideshow</span>
         </a>
         {% endif %}
         <!-- Contributors -->
         <a href="{{ url_for('ui_endpoints.event_dashboard', event_id=event.id, tab='contributors') }}"
-            class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 rounded-md transition-all {% if active_tab == 'contributors' %}text-brand-700 bg-brand-50 font-bold border border-brand-100{% else %}text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-transparent{% endif %}">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
-                </path>
-            </svg>
+            class="nav-link {% if active_tab == 'contributors' %}active{% endif %}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
             <span class="text-[10px] lg:text-sm text-center lg:text-left">Contributors</span>
         </a>
-        <!-- Back to Dash -->
-        <div class="pt-6 mt-6 border-t border-slate-100">
-            <a href="{{ url_for('ui_endpoints.dashboard') }}"
-                class="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 px-3 py-2.5 text-slate-400 hover:text-brand-600 transition-all">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 8.959 8.959 0 01-9 9 8.959 8.959 0 01-9-9z">
-                    </path>
-                </svg>
+        <!-- Back -->
+        <div class="pt-6 mt-6" style="border-top:1px solid var(--border-subtle);">
+            <a href="{{ url_for('ui_endpoints.dashboard') }}" class="nav-link" style="color:var(--text-muted);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 8.959 8.959 0 01-9 9 8.959 8.959 0 01-9-9z"/></svg>
                 <span class="text-[10px] lg:text-sm font-medium">Dashboard</span>
             </a>
         </div>

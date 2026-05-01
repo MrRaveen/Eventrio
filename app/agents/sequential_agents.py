@@ -357,6 +357,7 @@ CRITICAL RULES:
             YOUR TASK: Call automate_google_meet ONCE with these EXACT parameters:
 
             - **owner_id**: Find "user_id:" in the user's original message
+            - **event_id**: Use the event_id shown above ("{event_id}")
             - **event_details**: A dictionary with these keys extracted from event_details:
                 - "title": Find "event_name:" line in event_details
                 - "start_time": Find "start_time:" line in event_details
@@ -366,6 +367,8 @@ CRITICAL RULES:
             If the user's message contained:
             user_id: 113617420998142644821
 
+            And event_id is: 69f1915795b71fcde548f369
+
             And event_details contains:
             event_name: AI Innovation Hackathon 2026
             start_time: 2026-06-15T09:00:00Z
@@ -374,6 +377,7 @@ CRITICAL RULES:
             Then call:
             automate_google_meet(
                 owner_id="113617420998142644821",
+                event_id="69f1915795b71fcde548f369",
                 event_details={
                 "title": "AI Innovation Hackathon 2026",
                 "start_time": "2026-06-15T09:00:00Z",
@@ -416,12 +420,15 @@ CRITICAL RULES:
             - **owner_id**: Find "user_id:" in the user's original message
             - **page_id**: Find "fb_page_id:" in the user's original message
             - **message**: Create an engaging post using the event_description from event_details
+            - **event_id**: Use the event_id shown above ("{event_id}")
             - **image_url**: NOT NEEDED - the function handles this internally
 
             EXAMPLE:
             If the user's message contained:
             user_id: 113617420998142644821
             fb_page_id: 123456789012345
+
+            And event_id is: 69f1915795b71fcde548f369
 
             And event_details contains:
             event_name: AI Innovation Hackathon 2026
@@ -431,7 +438,8 @@ CRITICAL RULES:
             post_image_to_facebook_page(
                 owner_id="113617420998142644821",
                 page_id="123456789012345",
-                message="Join us for AI Innovation Hackathon 2026! A 48-hour virtual coding competition. Register now! #Hackathon #AI #Innovation"
+                message="Join us for AI Innovation Hackathon 2026! A 48-hour virtual coding competition. Register now! #Hackathon #AI #Innovation",
+                event_id="69f1915795b71fcde548f369"
             )
 
             The function returns either:

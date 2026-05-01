@@ -35,12 +35,14 @@ def create_event(name: str, description: str, org_id: str, owner_id: str, start_
         project.startDate = start_time
     if end_time:
         project.endDate = end_time
-    project.save()
-    # Increment usage
-    user.limits.projectsCount += 1
-    user.save()
-    # return f"Successfully created event '{name}' with ID: {str(project.id)}."
-    # return f"{str(project.id)}"
+    try:
+        project.save()
+        # Increment usage
+        user.limits.projectsCount += 1
+        user.save()
+    except Exception as e:
+        return f"Error saving event to database: {str(e)}"
+    
     event_id_str = str(project.id)
     return f"SUCCESS: Event created. The event_id is: {event_id_str}. You MUST use this exact event_id ({event_id_str}) in all subsequent function calls (generate_media_for_event, create_google_doc_for_event, save_tasks_to_db)."
 #create media
@@ -85,7 +87,10 @@ def generate_media_for_event(event_id: str, script_context: str) -> str:
     safe_script = quote(script_context)
     script_url = f"data:text/plain;charset=utf-8,{safe_script}"
     project.scriptLink = script_url
-    project.save()
+    try:
+        project.save()
+    except Exception as e:
+        return f"Error linking media to event: {str(e)}"
     return f"Media generated and linked to event {event_id} (Image & Script ready)."
 
 #create the google doc part
@@ -118,7 +123,7 @@ def create_google_doc_for_event(owner_id: str, event_id: str, plan_text: str) ->
     return f"Successfully created your Google Doc: {doc_link}"
 
 #create google meet link
-def automate_google_meet(owner_id: str, event_details: dict):
+def automate_google_meet(owner_id: str, event_details: dict, event_id: str = None):
     user = userAcc.objects(sub=owner_id).first()
     if not user or not user.oauthToken or not user.oauthToken.get('access_token'):
         return {"error": "Google authentication missing or expired for this user."}
@@ -134,6 +139,12 @@ def automate_google_meet(owner_id: str, event_details: dict):
 
         if not start_time or not end_time:
             return {"error": "Start time and end time are required for a meeting."}
+
+        # Google Calendar API with timeZone expects dateTime without 'Z' suffix
+        if start_time.endswith('Z'):
+            start_time = start_time[:-1]
+        if end_time.endswith('Z'):
+            end_time = end_time[:-1]
 
         payload = {
             "summary": title,
@@ -153,6 +164,14 @@ def automate_google_meet(owner_id: str, event_details: dict):
             data = response.json()
             link = data.get('hangoutLink')
             if link:
+                if event_id:
+                    project = Projects.objects(id=event_id).first()
+                    if project:
+                        project.meetingUrl = link
+                        try:
+                            project.save()
+                        except Exception as db_err:
+                            print(f"Error saving meetingUrl: {db_err}")
                 return {"link": link}
             return {"error": "Google API did not return a hangout link."}
         else:
@@ -161,12 +180,17 @@ def automate_google_meet(owner_id: str, event_details: dict):
         return {"error": f"Failed to automate Google Meet: {str(e)}"}
 
 #post fb posts
-def post_image_to_facebook_page(owner_id, page_id, message, image_url=None):
+def post_image_to_facebook_page(owner_id, page_id, message, event_id=None, image_url=None):
     user = userAcc.objects(sub=owner_id).first()
     if not user or not user.socialMediaTokens or not user.socialMediaTokens.facebook:
         return {"error": "Facebook token missing for this user. Please connect Facebook in Settings."}
     
     user_token = user.socialMediaTokens.facebook
+    if not image_url and event_id:
+        project = Projects.objects(id=event_id).first()
+        if project and project.mediaLinks:
+            image_url = project.mediaLinks[0]
+
     if page_id:
         #Get the Page Access Token
         accounts_url = f"https://graph.facebook.com/v19.0/me/accounts?access_token={user_token}"
@@ -199,7 +223,7 @@ def post_image_to_facebook_page(owner_id, page_id, message, image_url=None):
             except Exception as e:
                 return {"error": f"Failed to post: {str(e)}"}
         else:
-            return {"error": "Failed: You must provide an image_url."}
+            return {"error": "Failed: No image available for this event to post."}
     else:
         return None  # Skipped FB publishing (No Page Selected)
 
@@ -258,7 +282,7 @@ def create_slides(markdown_text: str,eventID : str):
             folder="eventrio_media",
             resource_type="raw",
             format="pptx",
-            public_id="eventrio_presentation"
+            public_id=f"eventrio_presentation_{eventID}"
         )
         final_cloudinary_url = upload_result.get('secure_url')
         if not final_cloudinary_url:
@@ -291,8 +315,18 @@ def save_tasks_to_db(owner_id: str, event_id: str,org_id:str, tasks_data_json: s
         return f"Error: Invalid event_id '{event_id}'. It must be a 24-character hex string from create_event."
     project = Projects.objects(id=event_id).first()
     if not project: return "Error: Event not found."
+    
+    # Securely use the orgID from the verified project instead of trusting the LLM
+    org_id = project.orgID
     try:
         if isinstance(tasks_data_json, str):
+            # Strip out any conversational fluff before or after the JSON array
+            tasks_data_json = tasks_data_json.strip()
+            start_idx = tasks_data_json.find('[')
+            end_idx = tasks_data_json.rfind(']')
+            if start_idx != -1 and end_idx != -1 and end_idx >= start_idx:
+                tasks_data_json = tasks_data_json[start_idx:end_idx+1]
+            
             tasks_data = json.loads(tasks_data_json)
         else:
             tasks_data = tasks_data_json
@@ -310,6 +344,10 @@ def save_tasks_to_db(owner_id: str, event_id: str,org_id:str, tasks_data_json: s
         return "Error: tasks_data_json must be a JSON array or an object containing a list under 'tasks'."
     new_tasks = []
     for item in tasks_data:
+        # Convert empty strings to None for DateTimeField validation
+        start_date = item.get('start_date')
+        due_date = item.get('due_date')
+        
         newTask = tasks(
             orgID=org_id,
             event_id=event_id,
@@ -317,23 +355,13 @@ def save_tasks_to_db(owner_id: str, event_id: str,org_id:str, tasks_data_json: s
             assigned_to="NONE",
             title=item.get('title', 'Untitled Task'),
             description=item.get('description',''),
-            startDate=item.get('start_date', ''),
-            deadline=item.get('due_date', ''),
+            startDate=start_date if start_date else None,
+            deadline=due_date if due_date else None,
             media_links=[]
         )
-        newTask.save()
-        # if isinstance(item, str):
-        #     new_tasks.append({
-        #         "id": str(uuid.uuid4()),
-        #         "title": item,
-        #         "isCompleted": False
-        #     })
-        # elif isinstance(item, dict):
-        #     new_tasks.append({
-        #         "id": str(uuid.uuid4()),
-        #         "title": item.get('title', 'Untitled Task'),
-        #         "startDate": item.get('start_date', ''),
-        #         "dueDate": item.get('due_date', ''),
-        #         "isCompleted": False
-        #     })
-    return f"Successfully saved {len(tasks_data)} tasks to MongoDB."
+        try:
+            newTask.save()
+        except Exception as e:
+            print(f"Error saving task '{item.get('title')}': {e}")
+            continue
+    return f"Successfully processed tasks to MongoDB."

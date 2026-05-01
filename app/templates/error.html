@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <div
-    class="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-6 transition-colors duration-200">
+    class="min-h-screen bg-white dark:bg-slate-950 flex flex-col items-center justify-center p-6 transition-colors duration-200">
     <div class="text-center max-w-lg relative">
 
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-            <span class="text-[12rem] font-black text-slate-200 dark:text-brand-900/30">{{ error_code | default('404')
+            <span class="text-[12rem] font-black text-slate-200 dark:text-brand-950/30">{{ error_code | default('404')
                 }}</span>
         </div>
 
@@ -19,7 +19,7 @@
                 </svg>
             </div>
 
-            <h2 class="text-3xl font-extrabold text-slate-900 dark:text-white mb-4 tracking-tight">
+            <h2 class="text-3xl font-extrabold text-slate-800 dark:text-white mb-4 tracking-tight">
                 {{ error_title | default('Page Not Found') }}
             </h2>
 
