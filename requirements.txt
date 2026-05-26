@@ -36,3 +36,4 @@ litellm
 # Essential ADK & Infrastructure Dependencies
 mcp
 dnspython
+instructor

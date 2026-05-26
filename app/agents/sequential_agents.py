@@ -57,9 +57,7 @@ class SequentialAgents:
                     model="ollama_chat/qwen2.5:3b"
                 )
 
-            # ================================================================
-            # Agent 1: Basic Info Extractor (no changes needed)
-            # ================================================================
+            # Agent 1: Basic Info Extractor
             self.basic_info_agent = Agent(
                 model=local_llm,
                 name='create_basic_info',
@@ -101,9 +99,7 @@ tasks_json: [JSON array]""",
                 output_key='event_details'
             )
 
-            # ================================================================
-            # Agent 2: Event Creator (FIXED - reads org_id/user_id from message)
-            # ================================================================
+            # Agent 2: Event Creator
             self.event_creator_agent = Agent(
                 model=local_llm,
                 name='create_event',

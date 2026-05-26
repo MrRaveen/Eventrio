@@ -130,6 +130,11 @@ stripe listen --forward-to localhost:5000/payment/webhook
 
 ---
 
+## Future dev
+![alt text](image-17.png)
+- python playground.py
+- curl -s "http://127.0.0.1:5000/test?prompt=Create+a+sports+meetup+on+August+10+called+Eventrio+Sports+Day" | jq .
+
 ## 🗺️ Roadmap
 
 - [ ] **Multi-Platform Posting**: Adding LinkedIn and Pinterest automation.
