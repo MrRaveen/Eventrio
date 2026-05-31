@@ -16,3 +16,4 @@ class EventDetailsSchema(BaseModel):
     end_time: str = Field(description="End date/time in RFC3339 format")
     image_prompt: str = Field(description="Short prompt (max 100 chars) for generating a cover image")
     tasks: List[Task] = Field(description="List of 5-7 tasks for the event")
+    targetingPointsToDiscuss: List[str] = Field(description="10 main points to discuss within the event and this helps to create the presentation.")

@@ -12,6 +12,9 @@ if project_root not in sys.path:
 from dotenv import load_dotenv
 load_dotenv()
 
+from app.db import init_db
+init_db()
+
 # Load the import hook (mocking infrastructure) if APP_STATUS is set to Development
 app_status = os.getenv('APP_STATUS')
 
@@ -237,6 +240,68 @@ class SequentialAgents:
         except Exception as e:
             print(f"Failed to initialize agents: {str(e)}")
             traceback.print_exc()
+    def testRunReadme(self, event_details: dict):
+        try:
+            tasks_list = event_details.get('tasks', [])
+            tasks_json_str = json.dumps(tasks_list)
+            
+            event_details_str = (
+                f"event_name: {event_details.get('event_name')}\n"
+                f"event_description: {event_details.get('event_description')}\n"
+                f"event_plan: {event_details.get('event_plan')}\n"
+                f"announcing_script: {event_details.get('announcing_script')}\n"
+                f"start_time: {event_details.get('start_time')}\n"
+                f"end_time: {event_details.get('end_time')}\n"
+                f"image_prompt: {event_details.get('image_prompt')}\n"
+                f"tasks_json: {tasks_json_str}\n"
+                f"targetingPointsToDiscuss: {json.dumps(event_details.get('targetingPointsToDiscuss', []))}"
+            )
+
+            session_service = InMemorySessionService()
+            session_id = f"test_{uuid.uuid4().hex[:8]}"
+            user_id = "test_user"
+            app_name = "TestReadmeAgent"
+
+            runner = Runner(
+                app_name=app_name,
+                agent=self.create_readme_agent,
+                session_service=session_service,
+                auto_create_session=False  # We create the session manually below
+            )
+            
+            content = types.Content(
+                role="user", 
+                parts=[types.Part(text="Generate markdown presentation slide deck for the event.")]
+            )
+            
+            async def run_agent():
+                # Pre-create the session with the event_details state variable
+                # so the ADK instruction template substitution can resolve {event_details}
+                await session_service.create_session(
+                    app_name=app_name,
+                    user_id=user_id,
+                    session_id=session_id,
+                    state={"event_details": event_details_str}
+                )
+                resp = ""
+                async for event in runner.run_async(
+                    user_id=user_id,
+                    session_id=session_id,
+                    new_message=content,
+                ):
+                    if event.content and event.content.parts:
+                        for part in event.content.parts:
+                            if part.text:
+                                resp += part.text
+                return resp
+            
+            return asyncio.run(run_agent())
+        except Exception as e:
+            print(f"Error in testRunReadme: {str(e)}")
+            traceback.print_exc()
+            return None
+
+
     def testRun(self, prompt: str, user_id: str = "user_default"):
         try:
             # 1. Define the current date dynamically when the function runs
@@ -293,18 +358,42 @@ def test():
         print(f"[/test] Received prompt: {prompt}")
         
         user_id = request.args.get('user_id', 'user_default')
-        extracted_data = agents.testRun(prompt, user_id=user_id)
         
+        extracted_data = agents.testRun(prompt, user_id=user_id)
+    
+        media_result = None
+        readme_result = None
         if extracted_data:
-            return {
-                "status": "success",
-                "extracted_data": extracted_data
-            }, 200
-        else:
-            return {
-                "status": "error",
-                "message": "Failed to extract event details."
-            }, 500
+            # Save the event data to the Projects collection
+            project = Projects(
+                name=extracted_data.get('event_name') or "Untitled Event",
+                description=extracted_data.get('event_description'),
+                ownerID=user_id
+            )
+            
+            start_time = extracted_data.get('start_time')
+            end_time = extracted_data.get('end_time')
+            if start_time:
+                # MongoEngine typically parses ISO datetime strings automatically
+                project.startDate = start_time
+            if end_time:
+                project.endDate = end_time
+                
+            project.save()
+            
+            # Pass the project document ID and generated image prompt to generate_media_for_event
+            img_prompt = extracted_data.get('image_prompt', '')
+            media_result = generate_media_for_event(str(project.id), img_prompt)
+            
+            # Run the readme agent
+            readme_result = agents.testRunReadme(extracted_data)
+
+        return {
+            "status": "success",
+            "extracted_data": extracted_data,
+            "media_result": media_result,
+            "readme_result": readme_result
+        }, 200
     except Exception as e:
         print(f"[/test] Route exception: {e}")
         traceback.print_exc()
