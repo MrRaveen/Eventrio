@@ -11,7 +11,7 @@ certifi
 Authlib
 python-dotenv
 requests
-
+flask-sse
 # Google ADK & MCP Integration
 # google-adk
 toolbox-core
@@ -28,12 +28,18 @@ mdtopptx
 python-pptx
 mailjet-rest
 dnspython
+gevent
 # Core Agent Framework
 google-adk[extensions]
 google-genai
 # Local Model Integration (Pinned for security/compatibility)
 litellm
-# Essential ADK & Infrastructure Dependencies
 mcp
 dnspython
 instructor
+
+langgraph 
+langchain-core 
+langchain-groq
+celery
+flask_limiter

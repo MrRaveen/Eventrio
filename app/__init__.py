@@ -44,6 +44,10 @@ def create_app():
     from app.routes.backend.customerUi import customer_ui
     from app.routes.backend.eventUiRoutes import event_ui_routes
     from app.routes.ui.socialSetupRoutes import social_setups
+    from app.routes.backend.notification import notification
+    from errors import errors_bp
+    from app.celery_init import init_celery
+
     oauth.init_app(app)
     app.register_blueprint(ui_endpoints)
     app.register_blueprint(auth_login)
@@ -52,4 +56,8 @@ def create_app():
     app.register_blueprint(customer_ui, url_prefix='/customer')
     app.register_blueprint(event_ui_routes,url_prefix="/event-ui")
     app.register_blueprint(social_setups)
+    app.register_blueprint(notification)
+    app.register_blueprint(errors_bp)
+    celery = init_celery(app)
+    app.extensions["celery"] = celery
     return app
