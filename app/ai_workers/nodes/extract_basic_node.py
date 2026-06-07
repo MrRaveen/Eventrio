@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import instructor
 from litellm import completion
 from typing import Dict, Any
@@ -16,8 +16,9 @@ class extract_basic_node:
             if not state:
                 raise APIError("400", "State is empty or None")
             
-            if not context or not isinstance(context, str) or not context.strip():
-                raise APIError("400", "State missing required variable: context")
+            prompt = state.get("prompt")
+            if not prompt or not isinstance(prompt, str) or not prompt.strip():
+                raise APIError("400", "State missing required variable: prompt")
 
             current_date = date.today().strftime("%Y-%m-%d")
             
@@ -35,7 +36,8 @@ class extract_basic_node:
                         )
                     },
                     {
-                        "role": "user"
+                        "role": "user",
+                        "content": state.get('prompt')
                     }
                 ],
                 response_model=EventDetailsSchema,
@@ -46,6 +48,11 @@ class extract_basic_node:
             try:
                 start_dt = datetime.fromisoformat(start_str)
                 end_dt = datetime.fromisoformat(end_str)
+                
+                current_time = datetime.now(timezone.utc) if start_dt.tzinfo else datetime.now()
+                if start_dt < current_time:
+                    raise APIError("400", f"Validation failed: Event start time ({extracted_data.start_time}) must be in the future.")
+
                 if end_dt <= start_dt:
                     raise APIError("400", f"Validation failed: Event end time ({extracted_data.end_time}) must be after start time ({extracted_data.start_time}).")
             except ValueError as val_err:
@@ -54,6 +61,10 @@ class extract_basic_node:
                 try:
                     task_start = datetime.strptime(task.start_date, "%Y-%m-%d").date()
                     task_due = datetime.strptime(task.due_date, "%Y-%m-%d").date()
+                    
+                    if task_start < date.today():
+                        raise APIError("400", f"Validation failed for task '{task.title}': task start date must be today or in the future.")
+
                     if task_due < task_start:
                         raise APIError("400", f"Validation failed for task '{task.title}': task due date must be after or equal to task start date.")
                 except ValueError as task_date_err:

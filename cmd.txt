@@ -1,0 +1,11 @@
+source venv/bin/activate
+python -m app.ai_workers.workflow.full_workflow
+celery -A celery_worker.celery worker --loglevel=info
+curl -X POST http://localhost:5001/test-workflow   -H "Content-Type: application/json"   -d '{
+    "user_id": "test_user_001",
+    "prompt": "Organize a local 3-day Python coding bootcamp."
+  }'
+
+
+
+
