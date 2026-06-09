@@ -1,6 +1,8 @@
-from mongoengine import Document, StringField, EnumField, IntField, DictField
-from app.models.enum.SAGAStepTypeEnum import SAGAStepTypeEnum
+from mongoengine import DictField, Document, EnumField, IntField, StringField
+
 from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
+from app.models.enum.SAGAStepTypeEnum import SAGAStepTypeEnum
+
 
 class SAGA_steps(Document):
     meta = {'collection': 'saga_steps'}

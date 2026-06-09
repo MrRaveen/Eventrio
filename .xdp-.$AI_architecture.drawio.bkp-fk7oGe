@@ -571,22 +571,22 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-178" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Object of the output class (this contains the previous data of each step and most required data for all processors in json form like id&#39;s)" vertex="1">
-          <mxGeometry height="80" width="320" x="1915" y="410" as="geometry" />
+          <mxGeometry height="80" width="320" x="2375" y="420" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-188" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-179" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="aI0FPI5ZwtMLXh6BXMUB-183">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-179" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Loop" vertex="1">
-          <mxGeometry height="40" width="100" x="1890" y="530" as="geometry" />
+          <mxGeometry height="40" width="100" x="2350" y="540" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-192" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-180" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="aI0FPI5ZwtMLXh6BXMUB-181" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-180" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Listen to the channel according to function name and terminates when the latest function output is came (passed as an parameter)" vertex="1">
-          <mxGeometry height="60" width="280" x="1990" y="820" as="geometry" />
+          <mxGeometry height="60" width="280" x="2450" y="830" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-181" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Updates the top level object by extracting data from the output of the channel (&lt;br&gt;updates 2 types: previous data and global required data. appends to the JSON in there)" vertex="1">
-          <mxGeometry height="60" width="280" x="1990" y="910" as="geometry" />
+          <mxGeometry height="60" width="280" x="2450" y="920" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-191" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-182" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="aI0FPI5ZwtMLXh6BXMUB-180" value="">
           <mxGeometry relative="1" as="geometry" />
@@ -595,42 +595,42 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-182" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Run the celery task with the returned JSON data as a parameter" vertex="1">
-          <mxGeometry height="60" width="280" x="1990" y="730" as="geometry" />
+          <mxGeometry height="60" width="280" x="2450" y="740" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-189" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-183" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="aI0FPI5ZwtMLXh6BXMUB-182" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-183" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="run a function to get the required data to pass to the current celery task based on the top object and return only rerquired data to the celery as a dynamic json" vertex="1">
-          <mxGeometry height="60" width="310" x="1975" y="640" as="geometry" />
+          <mxGeometry height="60" width="310" x="2435" y="650" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-185" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-184" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="aI0FPI5ZwtMLXh6BXMUB-183">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="2305" y="350" />
-              <mxPoint x="2305" y="670" />
+              <mxPoint x="2765" y="360" />
+              <mxPoint x="2765" y="680" />
             </Array>
           </mxGeometry>
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-184" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="function which returns a custom json for the celery task input by taking the output object" vertex="1">
-          <mxGeometry height="60" width="310" x="1920" y="320" as="geometry" />
+          <mxGeometry height="60" width="310" x="2380" y="330" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-196" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-193" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="aI0FPI5ZwtMLXh6BXMUB-194" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-193" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Clery task" vertex="1">
-          <mxGeometry height="60" width="280" x="2360" y="730" as="geometry" />
+          <mxGeometry height="60" width="280" x="2820" y="740" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-197" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-194" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="aI0FPI5ZwtMLXh6BXMUB-195" value="">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-194" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Update the state separately in the DB with response JSON" vertex="1">
-          <mxGeometry height="60" width="280" x="2360" y="820" as="geometry" />
+          <mxGeometry height="60" width="280" x="2820" y="830" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-199" edge="1" parent="1" source="aI0FPI5ZwtMLXh6BXMUB-195" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="aI0FPI5ZwtMLXh6BXMUB-180">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-195" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="return the only required data to the channel" vertex="1">
-          <mxGeometry height="60" width="280" x="2360" y="910" as="geometry" />
+          <mxGeometry height="60" width="280" x="2820" y="920" as="geometry" />
         </mxCell>
         <mxCell id="aI0FPI5ZwtMLXh6BXMUB-200" parent="1" style="whiteSpace=wrap;html=1;align=center;" value="Redis cache (store the important information):&lt;br&gt;previous data and global data under one key" vertex="1">
           <mxGeometry height="70" width="320" x="3715" y="820" as="geometry" />

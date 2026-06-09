@@ -1,5 +1,7 @@
-from pydantic import BaseModel, Field
 from typing import List
+
+from pydantic import BaseModel, Field
+
 
 class Task(BaseModel):
     title: str = Field(description="Task name")
@@ -9,7 +11,7 @@ class Task(BaseModel):
 
 class EventDetailsSchema(BaseModel):
     chain_of_thought: str = Field(
-        ..., 
+        ...,
         description="Think step-by-step to plan the event. Explicitly calculate the start and end dates relative to the current date, brainstorm the theme, and list required steps before generating the final fields."
     )
     event_name: str = Field(description="Short, catchy event name")

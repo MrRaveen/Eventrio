@@ -1,172 +1,159 @@
-from mcp import StdioServerParameters
-import traceback
-from app.agents.manual_services import save_tasks_to_db
-from app.agents.manual_services import schedule_real_google_calendar
-from app.agents.manual_services import create_google_doc_for_event
-from app.agents.manual_services import generate_media_for_event
-from app.agents.manual_services import create_event
-import os
-from app.models.projects import Projects
-from app.models.userAcc import userAcc
-try:
-    from google.adk.agents import Agent  
-    from google.adk import Runner
-    from google.adk.sessions import InMemorySessionService
-    from google import genai  
-    from google.adk.models import LiteLlm  
-    from google.genai import types
-except ImportError as e:
-    print(f"CRITICAL: Global ADK Import Failed: {e}")
-    Agent = types = Runner = InMemorySessionService = LiteLlm = None
-import uuid
-import requests
-import json
-
-class EventAgentsManager:
-    def __init__(self):
+@staticmethod
+    def execute_saga(userID:str, prompt:str, isRecovery: bool = False):
         try:
-            from google.adk.tools.mcp_tool import McpToolset, StdioConnectionParams
-            print("MCP tools loaded successfully")
-        except ImportError:
-            print("Notice: MCP tools not found. Running agents without MCP.")
-            McpToolset = StdioConnectionParams = None
-
-        if Agent is None:
-            print("Google ADK missing. Agent functionality disabled.")
-            self.planning_agent = None
-            self.media_agent = None
-            self.social_media_agent = None
-            self.stream_handler_agent = None
-            self.main_agent = None
-            return
-
-        try:
-            mcp_toolset = None
-            # local_llm = LiteLlm(model="ollama_chat/gemma2:2b")
-            local_llm = LiteLlm(
-                            model="ollama/glm-4.7:cloud", # or use any model you find in the ollama.com library
-                            api_key=os.getenv("MODEL_KEY"),
-                            api_base="https://ollama.com/api/generate"
-                        )
-            if McpToolset and StdioConnectionParams:
-                mcp_script_path = os.path.join(os.path.dirname(__file__), 'mcp_server.py')
-                connection_params = StdioConnectionParams(
-                    server_params=StdioServerParameters(
-                        command="python",
-                        args=[mcp_script_path]
-                    )
+            if isRecovery:
+                pass
+            else:
+                workflow_end_time = datetime.fromtimestamp(time.time())
+                newWorkflow = SAGA_workflow(
+                    userID=userID,
+                    status=SAGAWorkflowStatusEnum.PROCESSING
                 )
-                mcp_toolset = McpToolset(connection_params=connection_params)
+                newWorkflow.save()
 
-            planning_tools = [create_event, create_google_doc_for_event, schedule_real_google_calendar, save_tasks_to_db, generate_media_for_event, mcp_toolset] if mcp_toolset else [create_event, create_google_doc_for_event, schedule_real_google_calendar, save_tasks_to_db, generate_media_for_event]
-            media_tools = [generate_media_for_event, mcp_toolset] if mcp_toolset else [generate_media_for_event]
-            other_tools = [mcp_toolset] if mcp_toolset else []
+                # Load JSON file
+                rules_path = os.path.join(os.path.dirname(__file__), '..', 'step_rules', 'rules_v1.json')
+                with open(rules_path, 'r') as f:
+                    rules = json.load(f)
 
-            self.planning_agent = Agent(
-                model=local_llm,
-                name='planning_agent',
-                description='Plans events and schedules them natively and externally.',
-                instruction='You are an autonomous event planner. When asked to create an event, DO NOT ask the user for tasks or a plan. Automatically generate a detailed list of tasks including their start and due dates based on the event context. Use create_event to save to DB (IMPORTANT: Extract the org_id from the [Context] block if present, and use the provided owner_id). IMPORTANT: For schedule_real_google_calendar, you MUST convert and format start_time and end_time as valid RFC3339 datetime strings (e.g. 2026-04-09T00:30:00Z) before calling it. For save_tasks_to_db, pass `tasks_data_json` as a valid JSON string (an array of dictionaries). Draft the document using create_google_doc_for_event. Finally, you MUST use generate_media_for_event to generate an image and announcer script for the event. For the script_context, provide a short, fun 1-sentence welcome script for the announcer.',
-                tools=planning_tools
-            )
+                for step in rules.get('main_steps', []):
+                    function_name = step.get('function_name')
+                    task_function = TASK_MAPPING.get(function_name)
 
-            self.media_agent = Agent(
-                model=local_llm,
-                name='media_agent',
-                description='Generates media items (scripts, images) for a specific event.',
-                instruction='Use generate_media_for_event for DB links and generate_pollinations_image to create real image URLs.',
-                tools=media_tools
-            )
+                    if task_function:
+                        print(f"Calling Celery task: {function_name}")
+                        #save the SAGA step
+                        newStep = SAGA_steps(
+                            workflow_ID = str(newWorkflow.id),
+                            step_type = SAGAStepTypeEnum(function_name),
+                            step_status = SAGAStepStatusEnum.PROGRESS
+                        )
+                        newStep.save()
 
-            self.social_media_agent = Agent(
-                model=local_llm,
-                name='social_media_agent',
-                description='Creates and evaluates social media posts.',
-                instruction='Craft engaging social media posts. Ask the user, then use send_buffer_social_post to stage them.',
-                tools=other_tools
-            )
+                        import time
+                        start_time = time.time()
+                        #todo: pass the data taken from the response json
+                        if function_name == "execute_workflow":
+                            task_function.delay(userID, prompt)
+                        else:
+                            task_function.delay()
+                        result = listen_to_response_channel(task_terminate = function_name)
+                        end_time = time.time()
+                        time_diff_ms = int((end_time - start_time) * 1000)
 
-            self.stream_handler_agent = Agent(
-                model=local_llm,
-                name='stream_handler_agent',
-                description='Handles stream initiation logic.',
-                instruction='You act as the automatic handler for starting event streams.',
-                tools=other_tools
-            )
+                        oldStep =  SAGA_steps.objects(id=newStep.id).first()
+                        if oldStep and result:
+                            status_str = result.get("status")
+                            if status_str:
+                                try:
+                                    oldStep.step_status = SAGAStepStatusEnum(status_str)
+                                except ValueError:
+                                    oldStep.step_status = SAGAStepStatusEnum.ERROR
 
-            self.main_agent = Agent(
-                model=local_llm,
-                name='main_agent',
-                description='The primary orchestrator agent that delegates to sub-agents.',
-                instruction='You are the central coordinator. Parse context (including any Organization ID in the [Context] block) and transfer control to the necessary sub-agent based on user request (planning_agent, media_agent, social_media_agent). Ensure all context, especially IDs, is passed through.',
-                sub_agents=[self.planning_agent, self.media_agent, self.social_media_agent, self.stream_handler_agent]
-            )
+                            oldStep.response_json = result.get("data", {})
+                            oldStep.total_time_ms = time_diff_ms
+                            oldStep.save()
 
-            # Performance: Initialize runner once
-            self.session_service = InMemorySessionService()
-            self.runner = Runner(
-                app_name="Eventrio",
-                agent=self.main_agent,
-                session_service=self.session_service,
-                auto_create_session=True
-            )
+                    else:
+                        print(f"Task mapping not found for function: {function_name}")
+                workflow_end_time = datetime.fromtimestamp(time.time())
+                completed_workflow = SAGA_workflow.objects(id=newWorkflow.id).first()
+                if completed_workflow:
+                     completed_workflow.ending_timestamp = datetime.fromtimestamp(time.time())
+                else:
+                    raise APIError(500,"Completed workflow cannot be found")
 
-            print("ADK Agents Initialized successfully with Native + MCP tools.")
         except Exception as e:
-            print(f"Failed to initialize ADK agents: {str(e)}")
-            self.planning_agent = None
-            self.media_agent = None
-            self.social_media_agent = None
-            self.stream_handler_agent = None
-            self.main_agent = None
+            print(f"Error in execute_saga: {e}")
 
-    def run_agent(self, agent_to_use, prompt: str,fbPageID: str = None, user_id: str = "user_default") -> str:
-        """Utility to run an agent via the official ADK Runner sync interface."""
-        if not self.main_agent or not self.runner:
-            return "Error: Agents not initialized."
 
-        # If we want to run a specific agent directly, we create a temporary runner
-        # or just invoke the main runner if it's the main agent.
-        target_runner = self.runner
-        if agent_to_use != self.main_agent:
-            target_runner = Runner(
-                app_name="EventrioSub",
-                agent=agent_to_use,
-                session_service=InMemorySessionService(),
-                auto_create_session=True
-            )   
-        content = types.Content(role="user", parts=[types.Part(text=prompt)])
 
-        import asyncio
-        import time
-        max_retries = 3
-        delay = 2
 
-        async def _run_with_retry():
-            current_delay = delay
-            for attempt in range(max_retries):
-                response_text = ""
-                try:
-                    # Async execution allows us to properly catch API exceptions
-                    async for event in target_runner.run_async(
-                        user_id=user_id,
-                        session_id=f"stateless_{attempt}",
-                        new_message=content
-                    ):
-                        if event.content and event.content.parts:
-                            for part in event.content.parts:
-                                if part.text:
-                                    response_text += part.text
-                    return response_text
-                except Exception as e:
-                    if "503" in str(e) and attempt < max_retries - 1:
-                        print(f"Gemini 503 detected. Retrying {attempt+1}/{max_retries}...")
-                        await asyncio.sleep(current_delay)
-                        current_delay *= 2
-                        continue
-                    return f"Agent Execution Error: {str(e)}"
-            return "Error: Maximum retries reached."
 
-        return asyncio.run(_run_with_retry())
 
-agent_manager = EventAgentsManager()
+
+
+
+
+import json
+import os
+from app.models.saga_workflow import SAGA_workflow
+from app.models.enum.SAGAWorkflowStatusEnum import SAGAWorkflowStatusEnum
+from app.models.saga_steps import SAGA_steps
+from app.models.enum.SAGAStepTypeEnum import SAGAStepTypeEnum
+from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
+
+from app.ai_workers.workflow.full_workflow import execute_workflow
+from app.orchestrator.services.document_service import document_service
+from app.orchestrator.redis_orchestrator_queue import listen_to_response_channel
+from datetime import datetime
+from app.config import getRedisClient
+from app.orchestrator.saga.redis_save import execute_workflow_redis
+
+TASK_MAPPING = {
+    "execute_workflow": execute_workflow,
+    "create_google_doc_for_event": document_service.create_google_doc_for_event_task,
+    "automate_google_meet": automate_google_meet_task,
+    "post_image_to_facebook_page": post_image_to_facebook_page_task,
+    "schedule_real_google_calendar": schedule_real_google_calendar_task
+}
+REDIS_MAPPING = {
+    "execute_workflow": execute_workflow_redis
+}
+
+class engine:
+    def __init__():
+        self.redis_client = getRedisClient()
+    def start_engine(userID:str, prompt:str,org_id:str):
+        try:
+            newWorkflow = SAGA_workflow(
+                userID=userID,
+                status=SAGAWorkflowStatusEnum.PROCESSING
+            )
+            newWorkflow.save()
+            execute_workflow.delay(userID,prompt,org_id,str(newWorkflow.id))
+        except Exception as e:
+            print(f"Error in execute_saga: {e}") 
+    @staticmethod
+    def background_orches_worker():
+        try:
+            redis_client = getRedisClient()
+            pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
+            channel = os.getenv('CHANNEL_NAME_ORCHESTRATOR')
+            pubsub.subscribe(channel)
+            for message in pubsub.listen():
+                payload = json.loads(message['data'].decode('utf-8'))
+                #update redis
+                function_redis = REDIS_MAPPING.get(payload.get('function_name'))
+                function_redis(payload, redis_client)
+                #save mongo
+                inner_payload = payload.get('payload', {})
+                newStep = SAGA_steps(
+                    workflow_ID = inner_payload.get('workflowID'),
+                    step_type = SAGAStepTypeEnum(payload.get('function_name')),
+                    step_status = SAGAStepStatusEnum(payload.get('status')),
+                    total_time_ms = payload.get('ms'),
+                    response_json = payload
+                )
+                newStep.save()
+                # find the next step
+                rules_path = os.path.join(os.path.dirname(__file__), '..', 'step_rules', 'rules_v1.json')
+                with open(rules_path, 'r') as f:
+                    rules = json.load(f)
+                selectedStep = None    
+                for step in rules.get('main_steps', []):
+                    function_name = step.get('function_name')
+                    if function_name == payload.get('function_name'):
+                        selectedStep = TASK_MAPPING.get(payload.get('function_name'))
+                        break
+                #create the payload
+                data_for_task = create_google_doc_for_event_task_payload(inner_payload.get('user_id'),inner_payload.get('workflowID'))    
+                if selectedStep is not None:
+                    print(f"Calling Celery task: {payload.get('function_name')}")
+                    selectedStep.delay(data_for_task)
+                else:
+                    raise APIError("500","task selected is empty")    
+        except Exception as e:
+            print(f"Error in execute_saga: {e}")         
+    
+
