@@ -28,6 +28,7 @@ class update_details_node:
             event.mediaLinks = state.get('media_result')
             event.targetingPointsToDiscuss = validated_created_details.targetingPointsToDiscuss
             event.eventPlan = validated_created_details.event_plan
+            event.fb_post = state.get('facebook_post_result')
             event.save()
             
             newAgenda = Agenda(

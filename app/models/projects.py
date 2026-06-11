@@ -14,6 +14,7 @@ class Projects(Document):
     startDate = DateTimeField(default=lambda: datetime.now(timezone.utc))
     endDate = DateTimeField()
     eventPlan = StringField()
+    fb_post = StringField()
     isEventStarted = BooleanField(default=False)
     orgID = StringField()
     ownerID = StringField()

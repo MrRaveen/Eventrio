@@ -8,6 +8,8 @@ if app_status == "Development":
     execute()
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_apscheduler import APScheduler
+scheduler = APScheduler()
 
 def create_app():
     cloudinary.config(
@@ -16,6 +18,18 @@ def create_app():
     api_secret=os.getenv('CLOUDINARY_API_SECRET')
     )
     app = Flask(__name__, template_folder='templates', static_folder='static')
+
+    scheduler.init_app(app)
+    scheduler.start()
+
+    # @scheduler.task('interval', id='do_job_1', seconds=30, misfire_grace_time=900)
+    # def job1():
+    #     print("Job 1 executed every 30 seconds.",flush=True)
+    from app.config import getRedisClient
+    redis_client = getRedisClient()
+    redis_client.publish(os.getenv('CHANNEL_NAME_ORCHESTRATOR'), '{"message": "simple"}')
+    from app.orchestrator.saga.engine import background_orches_worker
+    background_orches_worker()
     app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
     )

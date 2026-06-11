@@ -6,11 +6,6 @@
             "fallback_functions": []
         },
         {
-            "name": "update_project",
-            "function_name": "update_project",
-            "fallback_functions": []
-        },
-        {
             "name": "create_google_doc",
             "function_name": "create_google_doc_for_event",
             "fallback_functions": []

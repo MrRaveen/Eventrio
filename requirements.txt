@@ -43,3 +43,4 @@ langchain-core
 langchain-groq
 celery
 flask_limiter
+Flask-APScheduler

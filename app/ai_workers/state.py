@@ -9,5 +9,6 @@ class EventState(TypedDict):
     prompt: Optional[str]
     context: Optional[str]
     announcing_script_result: Optional[Any]
+    facebook_post_result: Optional[str]
     media_result: Optional[Any]
     readme_result: Optional[str]
