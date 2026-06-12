@@ -1,7 +1,34 @@
+import os
+import asyncio
 from flask import Blueprint, jsonify, request, session
 from app.orchestrator.saga.engine import engine
+from semantic_kernel import Kernel
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
+from openai import AsyncOpenAI
 
 ai_routes_bp = Blueprint('ai_routes', __name__)
+
+kernel = Kernel()
+
+@ai_routes_bp.route('/test-agent', methods=['POST'])
+def test_agent():
+    try:
+        client = AsyncOpenAI(
+            api_key=os.getenv("GROQ_API_KEY"),
+            base_url="https://api.groq.com/openai/v1"
+        )
+        service = OpenAIChatCompletion(
+            service_id="groq",
+            ai_model_id="llama-3.1-8b-instant",   
+            async_client=client
+        )
+
+        kernel.add_service(service)
+        result = asyncio.run(kernel.invoke_prompt("Summarise the latest news in 3 bullet points"))
+        return str(result)
+    except Exception as e:
+        return str(e)    
+
 
 @ai_routes_bp.route('/generate-event', methods=['POST'])
 def generate_event():
