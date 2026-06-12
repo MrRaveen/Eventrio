@@ -10,6 +10,9 @@ from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
 
 from app.ai_workers.workflow.full_workflow import execute_workflow
 from app.orchestrator.services.document_service import document_service
+from app.orchestrator.services.meet_service import meet_service
+from app.orchestrator.services.social_service import social_service
+from app.orchestrator.services.calendar_service import calendar_service
 from app.orchestrator.redis_orchestrator_queue import listen_to_response_channel
 from datetime import datetime
 from app.config import getRedisClient
@@ -21,9 +24,6 @@ from app.orchestrator.saga.redis_save import (
     schedule_real_google_calendar_task_redis
 )
 
-from app.orchestrator.services.meet_service import meet_service
-from app.orchestrator.services.social_service import social_service
-from app.orchestrator.services.calendar_service import calendar_service
 from app.orchestrator.saga.payload_creator import (
     create_google_doc_for_event_task_payload,
     automate_google_meet_task_payload,
@@ -31,6 +31,8 @@ from app.orchestrator.saga.payload_creator import (
     schedule_real_google_calendar_task_payload
 )
 from errors import APIError
+from app.orchestrator.channel_output import notification_payload
+
 
 TASK_MAPPING = {
     "execute_workflow": execute_workflow,
@@ -52,45 +54,50 @@ PAYLOADS = {
     "post_image_to_facebook_page": post_image_to_facebook_page_task_payload,
     "schedule_real_google_calendar": schedule_real_google_calendar_task_payload
 }
+
 class engine:
     def __init__(self):
         self.redis_client = getRedisClient()
 
     @staticmethod
-    def start_engine(userID:str, prompt:str,org_id:str,page_id:Optional[str]):
+    def start_engine(userID:str, prompt:str, org_id:str, page_id:Optional[str]):
         try:
             newWorkflow = SAGA_workflow(
                 userID=userID,
                 status=SAGAWorkflowStatusEnum.PROCESSING
             )
             newWorkflow.save()
-            #save the page id if there
             if page_id:
                 redis_client = getRedisClient()
                 redis_key = f"saga_cache:{userID}:{str(newWorkflow.id)}"
                 first_cache_save = {
-                    "page_id":page_id
+                    "page_id": page_id
                 }
                 json_payload = json.dumps(first_cache_save, default=str)
                 redis_client.set(redis_key, json_payload)
-            execute_workflow.delay(userID,prompt,org_id,str(newWorkflow.id))
+            execute_workflow.delay(userID, prompt, org_id, str(newWorkflow.id))
         except Exception as e:
             print(f"Error in start_engine: {e}") 
 
 # @scheduler.task('interval', id='orch_background', seconds=30, misfire_grace_time=900)
 def background_orches_worker():
     try:
-        print("background orches ")
+        print("background orches ", flush=True)
         redis_client = getRedisClient()
         pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
         channel = os.getenv('CHANNEL_NAME_ORCHESTRATOR')
+        notificationChannel = os.getenv('NOTIFICATION_CHANNEL')
         pubsub.subscribe(channel)
+        print(f"listening on {channel}.....")
         for message in pubsub.listen():
-            print("listeneing.....")
+            print("Received a message!")
             try:
                 if message['type'] != 'message':
                     continue
-                payload = json.loads(message['data'].decode('utf-8'))
+                raw = message['data']
+                if isinstance(raw, bytes):
+                    raw = raw.decode('utf-8')
+                payload = json.loads(raw)
                 current_function_name = payload.get('function_name')
                 if not current_function_name:
                     continue
@@ -100,16 +107,25 @@ def background_orches_worker():
                 if function_redis:
                     function_redis(payload, redis_client)
 
-                # save mongo
+                # extract inner_payload — all services now include user_id in payload
                 inner_payload = payload.get('payload', {})
-                newStep = SAGA_steps(
-                    workflow_ID = inner_payload.get('workflowID'),
-                    step_type = SAGAStepTypeEnum(current_function_name),
-                    step_status = SAGAStepStatusEnum(payload.get('status')),
-                    total_time_ms = payload.get('ms'),
-                    response_json = payload
-                )
-                newStep.save()
+                workflow_id = inner_payload.get('workflowID')
+                user_id = inner_payload.get('user_id')
+
+                # save to mongo — only save if we have a valid workflow_id
+                if workflow_id:
+                    try:
+                        newStep = SAGA_steps(
+                            workflow_ID=workflow_id,
+                            step_type=SAGAStepTypeEnum(current_function_name),
+                            step_status=SAGAStepStatusEnum(payload.get('status')),
+                            total_time_ms=payload.get('ms', 0),
+                            response_json=payload
+                        )
+                        newStep.save()
+                        print(f"Saved SAGA step for workflow {workflow_id}, step: {current_function_name}")
+                    except Exception as save_err:
+                        print(f"Error saving SAGA step: {save_err}")
 
                 # find the next step
                 rules_path = os.path.join(os.path.dirname(__file__), '..', 'step_rules', 'rules_v1.json')
@@ -128,7 +144,10 @@ def background_orches_worker():
                     selectedStep = TASK_MAPPING.get(next_function_name)
                     if selectedStep is not None:
                         selected_payload_fun = PAYLOADS.get(next_function_name)
-                        generated_payload = selected_payload_fun(inner_payload.get('user_id'), inner_payload.get('workflowID'))
+                        if not user_id or not workflow_id:
+                            print(f"Missing user_id or workflow_id — cannot build payload for {next_function_name}")
+                            continue
+                        generated_payload = selected_payload_fun(user_id, workflow_id)
                         
                         if hasattr(generated_payload, 'model_dump'):
                             data_for_task = generated_payload.model_dump()
@@ -137,14 +156,39 @@ def background_orches_worker():
                         else:
                             data_for_task = generated_payload
                             
-                        print(f"Calling Celery task: {next_function_name}")
+                        print(f"Calling Celery task: {next_function_name} with workflow {workflow_id}")
                         selectedStep.delay(data_for_task)
                     else:
-                        raise APIError("500", f"Task selected is empty for {next_function_name}")
+                        print(f"No task found in TASK_MAPPING for {next_function_name}")
                 else:
-                    print(f"Reached the end of the workflow for workflowID: {inner_payload.get('workflowID')}")
+                    print(f"Reached the end of the workflow for workflowID: {workflow_id}")
+                    try:
+                        redis_key = f"saga_cache:{user_id}:{workflow_id}"
+                        cached_data = redis_client.get(redis_key)
+                        parsed_data = json.loads(cached_data) if cached_data else {}
+                        projectID = parsed_data.get("projectID")
+                        notif = notification_payload(
+                            userID=user_id or "",
+                            projectID=projectID or "",
+                            workflowID=workflow_id or ""
+                        )
+                        converted_data = json.dumps(notif.model_dump(), default=str)
+                        redis_client.publish(notificationChannel, converted_data)
+                        print(f"Published notification for user {user_id}, project {projectID}")
+                    except Exception as notif_err:
+                        print(f"Error publishing notification: {notif_err}")
+                    # Mark workflow as completed
+                    if workflow_id:
+                        try:
+                            wf = SAGA_workflow.objects(id=workflow_id).first()
+                            if wf:
+                                wf.status = SAGAWorkflowStatusEnum.COMPLETED
+                                wf.save()
+                        except Exception as wf_err:
+                            print(f"Error updating workflow status: {wf_err}")
             except Exception as inner_e:
+                import traceback
+                traceback.print_exc()
                 print(f"Error processing message: {inner_e}")
     except Exception as e:
         print(f"Error in background_orches_worker: {e}")
-    

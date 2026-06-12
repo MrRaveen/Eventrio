@@ -4,6 +4,7 @@ import time
 import requests
 from celery import shared_task
 from pydantic import BaseModel
+from typing import Optional
 from app.models.projects import Projects
 from app.models.userAcc import userAcc
 from app.config import getRedisClient
@@ -14,11 +15,12 @@ class social_service:
     class req_data(BaseModel):
         owner_id: str
         event_id: str
-        page_id: str
+        page_id: Optional[str] = None
         workflow_id: str
 
-    @shared_task(bind=True)
-    def post_image_to_facebook_page_task(self, reqData: "social_service.req_data"):
+    @staticmethod
+    @shared_task(name='post_image_to_facebook_page_task', bind=False)
+    def post_image_to_facebook_page_task(reqData: dict):
         if isinstance(reqData, dict):
             reqData = social_service.req_data(**reqData)
 
@@ -35,6 +37,7 @@ class social_service:
                     "ms": time_diff_ms,
                     "payload": {
                         "workflowID": reqData.workflow_id,
+                        "user_id": reqData.owner_id,
                         "project_id": reqData.event_id,
                         **payload
                     }
@@ -83,14 +86,14 @@ class social_service:
 
                 #Publish the Photo to the Page (Note the /photos endpoint)
                 post_url = f"https://graph.facebook.com/v19.0/{reqData.page_id}/photos"
-                payload = {
+                fb_payload = {
                     'message': message,
                     'access_token': page_token
                 }
                 if image_url:
-                    payload['url'] = image_url
+                    fb_payload['url'] = image_url
                 try:
-                    response = requests.post(post_url, data=payload, timeout=10)
+                    response = requests.post(post_url, data=fb_payload, timeout=10)
                     res_json = response.json()
                     push_status(SAGAStepStatusEnum.COMPLETED, res_json)
                     return res_json

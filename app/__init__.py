@@ -22,14 +22,16 @@ def create_app():
     scheduler.init_app(app)
     scheduler.start()
 
-    # @scheduler.task('interval', id='do_job_1', seconds=30, misfire_grace_time=900)
-    # def job1():
-    #     print("Job 1 executed every 30 seconds.",flush=True)
-    from app.config import getRedisClient
-    redis_client = getRedisClient()
-    redis_client.publish(os.getenv('CHANNEL_NAME_ORCHESTRATOR'), '{"message": "simple"}')
+    import threading
     from app.orchestrator.saga.engine import background_orches_worker
-    background_orches_worker()
+    threading.Thread(target=background_orches_worker, daemon=True).start()
+    @app.route('/test-push', methods=['GET'])
+    def test_push():
+        from app.config import getRedisClient
+        redis_client = getRedisClient()
+        channel = os.getenv('CHANNEL_NAME_ORCHESTRATOR')
+        redis_client.publish(channel, '{"message": "simple"}')
+        return {"status": "success", "message": f"Pushed to channel {channel}"}
     app.wsgi_app = ProxyFix(
     app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
     )
@@ -59,6 +61,9 @@ def create_app():
     from app.routes.backend.eventUiRoutes import event_ui_routes
     from app.routes.ui.socialSetupRoutes import social_setups
     from app.routes.backend.notification import notification
+    from app.routes.testing import testing_bp
+    from app.routes.backend.notificationListener import notification_bp
+    from app.routes.backend.AIRoutes import ai_routes_bp
     from errors import errors_bp
     from app.celery_init import init_celery
 
@@ -71,6 +76,9 @@ def create_app():
     app.register_blueprint(event_ui_routes,url_prefix="/event-ui")
     app.register_blueprint(social_setups)
     app.register_blueprint(notification)
+    app.register_blueprint(testing_bp, url_prefix="/testing")
+    app.register_blueprint(notification_bp, url_prefix="/notifications")
+    app.register_blueprint(ai_routes_bp, url_prefix="/ai")
     app.register_blueprint(errors_bp)
     celery = init_celery(app)
     app.extensions["celery"] = celery

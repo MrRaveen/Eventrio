@@ -130,35 +130,26 @@ def browse_events():
     
     allEventsResponse: List[ProjectSchema] = []
     for e in events:
-        organization = Organizations.objects(id=e.orgID).first()
+        organization = Organizations.objects(id=e.orgID).first() if e.orgID else None
         org_name = organization.orgName if organization else "Unknown Organization"
-        
-        # Fetch tasks for this event
-        fetched_tasks = tasks.objects(event_id=str(e.id))
-        task_list = []
-        for t in fetched_tasks:
-            task_list.append({
-                "id": str(t.id),
-                "title": t.title,
-                "startDate": t.startDate.strftime('%Y-%m-%dT%H:%M:%S') if t.startDate else None,
-                "dueDate": t.deadline.strftime('%Y-%m-%dT%H:%M:%S') if t.deadline else None,
-                "status": t.status.value if hasattr(t.status, 'value') else t.status
-            })
+
+        org_location = organization.address if organization and organization.address else "Unknown Location"
+        points = [{"point": p} for p in e.targetingPointsToDiscuss] if getattr(e, 'targetingPointsToDiscuss', None) else []
 
         resObj = ProjectSchema(
             id = str(e.id),
             name = e.name,
             description = e.description,
             industry = e.industry,
-            userRole = e.userRole,
             attendeeCountExpected = e.attendeeCountExpected,
             startDate = e.startDate,
             endDate = e.endDate,
             isEventStarted = e.isEventStarted,
             orgName = org_name,
-            orgID = e.orgID,
-            mediaLinks = e.mediaLinks,
-            tasks = task_list
+            orgID = e.orgID or "",
+            orgLocation = org_location,
+            mediaLinks = e.mediaLinks or [],
+            targetingPointsToDiscuss = points
         )
         allEventsResponse.append(resObj)
         

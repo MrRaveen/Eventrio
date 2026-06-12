@@ -46,7 +46,7 @@ class generate_fb_node:
                 max_retries=3, 
             )
             
-            return {"facebook_post_result": extracted_data.model_dump()}
+            return {"facebook_post_result": extracted_data.post_content}
             
         except APIError:
             raise

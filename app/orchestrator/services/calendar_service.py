@@ -17,8 +17,9 @@ class calendar_service:
         end_time: str
         workflow_id: str
 
-    @shared_task(bind=True)
-    def schedule_real_google_calendar_task(self, reqData: "calendar_service.req_data"):
+    @staticmethod
+    @shared_task(name='schedule_real_google_calendar_task', bind=False)
+    def schedule_real_google_calendar_task(reqData: dict):
         if isinstance(reqData, dict):
             reqData = calendar_service.req_data(**reqData)
 
@@ -36,6 +37,7 @@ class calendar_service:
                     "ms": time_diff_ms,
                     "payload": {
                         "workflowID": reqData.workflow_id,
+                        "user_id": reqData.owner_id,
                         **payload
                     }
                 }
@@ -60,12 +62,12 @@ class calendar_service:
                 
             token = user.oauthToken.get('access_token')
             headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
-            payload = {
+            cal_payload = {
                 "summary": reqData.event_name,
                 "start": {"dateTime": reqData.start_time},
                 "end": {"dateTime": reqData.end_time}
             }
-            res = requests.post("https://www.googleapis.com/calendar/v3/calendars/primary/events", headers=headers, json=payload)
+            res = requests.post("https://www.googleapis.com/calendar/v3/calendars/primary/events", headers=headers, json=cal_payload)
             if res.status_code != 200:
                 err = {"error": f"Error scheduling calendar: {res.text}"}
                 push_status(SAGAStepStatusEnum.FAILED, err)

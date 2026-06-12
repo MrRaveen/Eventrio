@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="flex-grow flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden">
+<div class="flex flex-col md:flex-row h-screen w-full overflow-hidden">
     <!-- Left Pane: Search and Event List (30% width on md screens) -->
     <aside class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-slate-200 flex flex-col h-full bg-white shadow-sm">
         <!-- Search Header -->
@@ -112,26 +112,31 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
-                        <!-- Tasks/Agenda -->
+                        <!-- Topics to Discuss -->
                         <div>
-                            <h2 class="text-xl font-black text-slate-800 uppercase tracking-widest mb-6">Upcoming Milestones</h2>
-                            <ul class="space-y-4">
-                                {% if selected_event.tasks %}
-                                    {% for task in selected_event.tasks[:3] %}
-                                    <li class="flex items-start gap-4 p-4 bg-white rounded-2xl border border-slate-100 group hover:border-brand-200 transition-all">
-                                        <div class="w-6 h-6 rounded-full border-2 border-slate-300 flex-shrink-0 mt-0.5"></div>
+                            <h2 class="text-xl font-black text-slate-800 uppercase tracking-widest mb-6">Key Topics</h2>
+                            <ul class="flex flex-col gap-3 max-h-72 overflow-y-auto pr-2" style="scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent;">
+                                {% if selected_event.targetingPointsToDiscuss %}
+                                    {% for point in selected_event.targetingPointsToDiscuss %}
+                                    <li class="flex items-start gap-3 p-3.5 bg-white rounded-2xl border border-slate-100 group hover:border-brand-300 hover:shadow-md transition-all">
+                                        <div class="w-5 h-5 rounded-full border-2 border-brand-200 flex-shrink-0 mt-0.5 bg-brand-50 group-hover:bg-brand-500 group-hover:border-brand-500 transition-colors"></div>
                                         <div>
-                                            <h4 class="font-bold text-slate-800">{{ task.title }}</h4>
-                                            {% if task.dueDate %}
-                                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">By {{ task.dueDate }}</p>
-                                            {% else %}
-                                                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Open Milestone</p>
-                                            {% endif %}
+                                            <h4 class="font-bold text-slate-700 text-sm leading-snug group-hover:text-slate-900 transition-colors">
+                                                {% if point is mapping and point.get('topic') %}
+                                                    {{ point.get('topic') }}
+                                                {% elif point is mapping and point.get('point') %}
+                                                    {{ point.get('point') }}
+                                                {% elif point is string %}
+                                                    {{ point }}
+                                                {% else %}
+                                                    {{ point }}
+                                                {% endif %}
+                                            </h4>
                                         </div>
                                     </li>
                                     {% endfor %}
                                 {% else %}
-                                    <p class="text-sm text-slate-400 italic">No milestones published yet.</p>
+                                    <p class="text-sm text-slate-400 italic">No key topics published yet.</p>
                                 {% endif %}
                             </ul>
                         </div>
@@ -147,7 +152,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                     </svg>
-                                    Remote Presence Globally
+                                    {{ selected_event.orgLocation or 'Location TBD' }}
                                 </div>
                             </div>
                         </div>

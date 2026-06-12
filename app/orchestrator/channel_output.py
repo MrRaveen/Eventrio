@@ -7,6 +7,13 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
 
+from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
+
+class notification_payload(BaseModel):
+    userID:str
+    projectID:str
+    workflowID:str
+
 class EventPayload(BaseModel):
     project_id: str
     workflowID: str
@@ -18,7 +25,7 @@ class EventPayload(BaseModel):
     event_description: str
 
 class SagaStepResponse(BaseModel):
-    status: StepStatusEnum
+    status: SAGAStepStatusEnum
     function_name: str
     payload: EventPayload
 

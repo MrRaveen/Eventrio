@@ -171,7 +171,102 @@
     </main>
 </div>
 
+<!-- ═══ AI GENERATION LOADING OVERLAY ═══ -->
+<div id="aiLoadingOverlay" style="display:none; position:fixed; inset:0; z-index:9999; background:var(--bg-body); transition:opacity 0.4s;">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:32px;">
+        <!-- Animated spinner -->
+        <div style="position:relative; width:80px; height:80px;">
+            <div style="position:absolute; inset:0; border-radius:50%; border:3px solid var(--border);"></div>
+            <div class="ai-spinner" style="position:absolute; inset:0; border-radius:50%; border:3px solid transparent; border-top-color:var(--brand-solid);"></div>
+            <div style="position:absolute; inset:16px; border-radius:50%; background:var(--brand-bg); display:flex; align-items:center; justify-content:center;">
+                <svg class="w-6 h-6" style="color:var(--brand-solid);" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+        </div>
+        <!-- Status text -->
+        <div style="text-align:center;">
+            <p id="aiLoadingStatus" style="font-size:18px; font-weight:700; color:var(--text-primary); margin:0 0 8px;">Initializing AI Engine...</p>
+            <p style="font-size:13px; color:var(--text-muted); margin:0;">This may take a minute. Please don't close this page.</p>
+        </div>
+        <!-- Progress dots -->
+        <div style="display:flex; gap:6px;">
+            <div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes aiSpin { to { transform: rotate(360deg); } }
+    .ai-spinner { animation: aiSpin 1s linear infinite; }
+</style>
+
 <script>
+    // ─── Rotating AI status messages ───
+    const AI_MESSAGES = [
+        "🧠 Thinking about your event...",
+        "📝 Extracting event details...",
+        "🗓️ Planning the schedule...",
+        "🎨 Creating the event poster...",
+        "📄 Generating documentation...",
+        "💬 Writing social media posts...",
+        "📊 Building the agenda...",
+        "⚡ Orchestrating services...",
+        "🔗 Setting up Google integrations...",
+        "✨ Almost there, finalizing everything..."
+    ];
+    let _msgInterval = null;
+
+    function showLoadingOverlay() {
+        const overlay = document.getElementById('aiLoadingOverlay');
+        overlay.style.display = 'block';
+        overlay.style.opacity = '1';
+        let idx = 0;
+        const statusEl = document.getElementById('aiLoadingStatus');
+        statusEl.textContent = AI_MESSAGES[0];
+        _msgInterval = setInterval(() => {
+            idx = (idx + 1) % AI_MESSAGES.length;
+            statusEl.style.opacity = '0';
+            setTimeout(() => {
+                statusEl.textContent = AI_MESSAGES[idx];
+                statusEl.style.opacity = '1';
+            }, 300);
+        }, 3500);
+    }
+
+    function hideLoadingOverlay() {
+        if (_msgInterval) { clearInterval(_msgInterval); _msgInterval = null; }
+        const overlay = document.getElementById('aiLoadingOverlay');
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.style.display = 'none'; }, 400);
+    }
+
+    // ─── SSE notification listener ───
+    let _evtSource = null;
+
+    function startSSEListener() {
+        if (_evtSource) _evtSource.close();
+        _evtSource = new EventSource('/notifications/listen');
+        _evtSource.onmessage = function(event) {
+            try {
+                const payload = JSON.parse(event.data);
+                hideLoadingOverlay();
+                if (_evtSource) { _evtSource.close(); _evtSource = null; }
+
+                const projectID = payload.projectID;
+                appendMsg(`<div class="flex items-start gap-4 animate-fadeInUp"><div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:#10b981;"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg></div><div class="chat-bubble-ai px-5 py-4 flex-1"><p class="text-sm font-bold mb-1" style="color:var(--text-primary);">✅ Event generated successfully!</p><p class="text-sm" style="color:var(--text-secondary);">Your AI-powered event is ready. Redirecting to your event dashboard...</p></div></div>`);
+
+                setTimeout(() => {
+                    if (projectID) {
+                        window.location.href = `/event-ui/event-dashboard/${projectID}`;
+                    }
+                }, 2000);
+            } catch(e) { console.error('SSE parse error', e); }
+        };
+        _evtSource.onerror = function() {
+            console.warn('SSE connection error, will auto-reconnect');
+        };
+    }
+
+    // ─── Page init ───
     document.addEventListener('DOMContentLoaded', () => {
         const fbSelect = document.getElementById('chatFbPageSelect');
         if (fbSelect) {
@@ -190,6 +285,8 @@
                 })
                 .catch(() => { fbSelect.innerHTML = '<option value="">No need to post</option>'; });
         }
+
+        document.getElementById('aiLoadingStatus').style.transition = 'opacity 0.3s ease';
     });
 
     function handleKey(e) {
@@ -215,36 +312,39 @@
         const orgSelect = document.getElementById('chatOrgSelect');
         const text = input.value.trim();
         if (!text) return;
-
-        let contextPayload = text;
-        if (orgSelect && orgSelect.value) {
-            contextPayload = `[Context: Organization '${orgSelect.options[orgSelect.selectedIndex].text}' ID:'${orgSelect.value}']. ` + text;
+        if (!orgSelect || !orgSelect.value) {
+            Swal.fire({ icon:'warning', title:'Select Organization', text:'Please select an organization before generating.', confirmButtonColor:'#6E50F7' });
+            return;
         }
 
         appendMsg(`<div class="flex justify-end animate-fadeInUp"><div class="chat-bubble-user px-4 py-3 max-w-[80%] text-sm font-medium">${text.replace(/\n/g,'<br>')}</div></div>`);
         input.value = '';
         input.style.height = 'auto';
 
-        const lid = 'ld-' + Date.now();
-        appendMsg(`<div id="${lid}" class="flex items-start gap-4 animate-fadeInUp"><div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:var(--brand-solid);"><svg class="w-5 h-5 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="chat-bubble-ai px-4 py-3"><div class="flex gap-1.5 items-center"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div></div>`);
-
         const fbSelect = document.getElementById('chatFbPageSelect');
-        const fbPageID = fbSelect && fbSelect.value ? fbSelect.value : null;
+        const pageId = fbSelect && fbSelect.value ? fbSelect.value : null;
 
-        fetch('/main-dashboard/plan-event/main', {
+        // Show loading overlay and start SSE listener BEFORE the fetch
+        showLoadingOverlay();
+        startSSEListener();
+
+        fetch('/ai/generate-event', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: contextPayload, fbPageID: fbPageID, orgID: orgSelect ? orgSelect.value : null })
+            body: JSON.stringify({ prompt: text, orgID: orgSelect.value, page_id: pageId })
         })
         .then(res => res.json())
         .then(data => {
-            document.getElementById(lid)?.remove();
-            let reply = data.error ? "Error: " + data.error : data.response;
-            if (typeof reply === 'object') reply = JSON.stringify(reply);
-            appendMsg(`<div class="flex items-start gap-4 animate-fadeInUp"><div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style="background:var(--brand-solid);"><svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg></div><div class="chat-bubble-ai px-5 py-4 flex-1 text-sm leading-relaxed">${reply.replace(/\n/g,'<br>')}</div></div>`);
+            if (data.error) {
+                hideLoadingOverlay();
+                if (_evtSource) { _evtSource.close(); _evtSource = null; }
+                appendMsg(`<div class="flex justify-center animate-fadeInUp"><div class="px-4 py-2 rounded-lg text-xs font-semibold" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#ef4444;">Error: ${data.error}</div></div>`);
+            }
+            // If success (202), keep waiting — SSE will handle the completion
         })
         .catch(() => {
-            document.getElementById(lid)?.remove();
+            hideLoadingOverlay();
+            if (_evtSource) { _evtSource.close(); _evtSource = null; }
             appendMsg(`<div class="flex justify-center animate-fadeInUp"><div class="px-4 py-2 rounded-lg text-xs font-semibold" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#ef4444;">Connection failed. Please try again.</div></div>`);
         });
     }

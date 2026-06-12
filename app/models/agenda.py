@@ -6,5 +6,5 @@ from datetime import datetime, timezone
 class Agenda(Document):
     meta = {'collection': 'agenda'}
     
-    eventID = StringField(),
+    eventID = StringField()
     agendaList = ListField(StringField())

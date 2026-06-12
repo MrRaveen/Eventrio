@@ -21,8 +21,9 @@ class meet_service:
         event_id: Optional[str] = None
         workflow_id: str
 
-    @shared_task(bind=True)
-    def automate_google_meet_task(self, reqData: "meet_service.req_data"):
+    @staticmethod
+    @shared_task(name='automate_google_meet_task', bind=False)
+    def automate_google_meet_task(reqData: dict):
         if isinstance(reqData, dict):
             reqData = meet_service.req_data(**reqData)
 
@@ -39,6 +40,7 @@ class meet_service:
                     "ms": time_diff_ms,
                     "payload": {
                         "workflowID": reqData.workflow_id,
+                        "user_id": reqData.owner_id,
                         "project_id": reqData.event_id,
                         **payload
                     }
@@ -64,15 +66,17 @@ class meet_service:
                 return err
 
             # Google Calendar API with timeZone expects dateTime without 'Z' suffix
-            if reqData.start_time.endswith('Z'):
-                reqData.start_time = reqData.start_time[:-1]
-            if reqData.end_time.endswith('Z'):
-                reqData.end_time = reqData.end_time[:-1]
+            start_time = reqData.start_time
+            end_time = reqData.end_time
+            if start_time.endswith('Z'):
+                start_time = start_time[:-1]
+            if end_time.endswith('Z'):
+                end_time = end_time[:-1]
 
             payload = {
                 "summary": reqData.title,
-                "start": {"dateTime": reqData.start_time, "timeZone": "Asia/Colombo"},
-                "end": {"dateTime": reqData.end_time, "timeZone": "Asia/Colombo"},
+                "start": {"dateTime": start_time, "timeZone": "Asia/Colombo"},
+                "end": {"dateTime": end_time, "timeZone": "Asia/Colombo"},
                 "conferenceData": {
                     "createRequest": {
                         "requestId": str(uuid.uuid4()),

@@ -18,8 +18,9 @@ class document_service:
         plan_text: str
         workflow_id: str
         
-    @shared_task(bind=True)
-    def create_google_doc_for_event_task(self, reqData: "document_service.req_data"):
+    @staticmethod
+    @shared_task(name='create_google_doc_for_event_task', bind=False)
+    def create_google_doc_for_event_task(reqData: dict):
         if isinstance(reqData, dict):
             reqData = document_service.req_data(**reqData)
 
@@ -36,6 +37,7 @@ class document_service:
                     "ms": time_diff_ms,
                     "payload": {
                         "workflowID": reqData.workflow_id,
+                        "user_id": reqData.owner_id,
                         "project_id": reqData.event_id,
                         **payload
                     }
