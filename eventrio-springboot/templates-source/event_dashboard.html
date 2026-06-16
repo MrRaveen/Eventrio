@@ -1,0 +1,591 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex h-screen w-full overflow-hidden" style="background:var(--bg-body); color:var(--text-primary);">
+
+    <!-- Sidebar -->
+    {% include 'components/dashboard/sidebar.html' %}
+
+    <!-- Main Workspace -->
+    <main class="flex-1 overflow-y-auto p-6 md:p-10" style="background:var(--bg-body);">
+        <div class="max-w-5xl mx-auto space-y-8">
+            <header class="pb-6 flex flex-wrap items-center justify-between gap-4" style="border-bottom:1px solid var(--border);">
+                <div>
+                    <h2 class="text-3xl font-extrabold flex items-center gap-3" style="color:var(--text-primary);">
+                        {{ event.name }}
+                        {% if event.isEventStarted %}
+                        <span
+                            class="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded uppercase tracking-widest">Started</span>
+                        {% else %}
+                        <span
+                            class="px-2 py-0.5 bg-brand-100 text-brand-700 text-xs font-bold rounded uppercase tracking-widest">Upcoming</span>
+                        {% endif %}
+                    </h2>
+                    {% if event.description %}
+                    <p class="text-slate-500 mt-2 text-lg">{{ event.description }}</p>
+                    {% endif %}
+                </div>
+            </header>
+
+            <!-- Dynamic Content Area -->
+            {% if active_tab == 'tasks' %}
+                {% include 'components/dashboard/tab_tasks.html' %}
+            {% elif active_tab == 'calendar' %}
+                {% include 'components/dashboard/tab_calendar.html' %}
+            {% elif active_tab == 'media' %}
+                {% include 'components/dashboard/tab_media.html' %}
+            {% elif active_tab == 'script' %}
+                {% include 'components/dashboard/tab_script.html' %}
+            {% elif active_tab == 'slideshow' and event.slideShowLink %}
+                {% include 'components/slideshow.html' %}
+            {% elif active_tab == 'meeting' and event.meetingUrl %}
+                {% include 'components/dashboard/tab_meeting.html' %}
+            {% elif active_tab == 'contributors' %}
+                {% include 'components/dashboard/tab_contributors.html' %}
+            {% endif %}
+        </div>
+    </main>
+
+    <!-- Modals -->
+    {% include 'components/dashboard/modals.html' %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    /* =============================================
+     * Global Config
+     * ============================================= */
+    const eventID = "{{ event.id }}";
+    const orgID = "{{ event.orgID }}";
+    const activeTab = "{{ active_tab }}";
+
+    /* =============================================
+     * Task Data Map (clean server-side serialization)
+     * Eliminates broken HTML-attribute JSON parsing
+     * ============================================= */
+    const TASK_DATA = {
+        {% if event_tasks %}
+        {% for task in event_tasks %}
+        "{{ task.id }}": {
+            title: {{ task.title | tojson }},
+            description: {{ (task.description or '') | tojson }},
+            priority: {{ (task.priority.value if task.priority and task.priority is not string else (task.priority or 'medium')) | tojson }},
+            status: {{ (task.status.value if task.status and task.status is not string else (task.status or 'in progress')) | tojson }},
+            assigned_to: {{ (task.assigned_to or 'NONE') | tojson }},
+            startDate: {{ (task.startDate.isoformat() if task.startDate and task.startDate is not string else (task.startDate or '')) | tojson }},
+            deadline: {{ (task.deadline.isoformat() if task.deadline and task.deadline is not string else (task.deadline or '')) | tojson }}
+        },
+        {% endfor %}
+        {% endif %}
+    };
+
+    /* =============================================
+     * Calendar Module
+     * ============================================= */
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarEl = document.getElementById('calendar');
+        if (calendarEl) {
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                themeSystem: 'standard',
+                height: 'auto',
+                events: [
+                    {% if event_tasks %}
+                    {% for task in event_tasks %}
+                    {
+                        title: {{ task.title | tojson }},
+                        start: {{ (task.startDate.isoformat() if task.startDate and task.startDate is not string else (task.startDate or '')) | tojson }},
+                        end: {{ (task.deadline.isoformat() if task.deadline and task.deadline is not string else (task.deadline or '')) | tojson }},
+                        backgroundColor: '#7c3aed',
+                        borderColor: '#6d28d9'
+                    },
+                    {% endfor %}
+                    {% endif %}
+                ]
+            });
+            calendar.render();
+        }
+    });
+
+    /* =============================================
+     * Script Copy Utility
+     * ============================================= */
+    function copyScript() {
+        const scriptEl = document.getElementById('scriptContent');
+        if (!scriptEl) return;
+        navigator.clipboard.writeText(scriptEl.innerText).then(() => {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title: 'Copied!', text: 'Script copied to clipboard.', icon: 'success', timer: 1500, showConfirmButton: false });
+            } else {
+                alert('Script copied to clipboard!');
+            }
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy script.');
+        });
+    }
+
+    /* =============================================
+     * Media Download Utility
+     * ============================================= */
+    function downloadMedia(url, filename) {
+        fetch(url)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.blob();
+            })
+            .then(blob => {
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(blobUrl);
+                document.body.removeChild(a);
+            })
+            .catch(error => {
+                console.error('Download error:', error);
+                window.open(url, '_blank');
+            });
+    }
+
+    /* =============================================
+     * Contributors Module
+     * ============================================= */
+    if (activeTab === 'contributors') {
+        loadContributors();
+        loadRoles();
+    }
+
+    async function loadRoles() {
+        try {
+            const response = await fetch('/event-ui/get-roles');
+            const result = await response.json();
+            if (result.message === 'Success') {
+                ['roleSelect', 'editRoleSelect'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = result.data.map(role => `<option value="${role}">${role}</option>`).join('');
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading roles:', error);
+        }
+    }
+
+    async function loadContributors() {
+        const listContainer = document.getElementById('contributorsList');
+        try {
+            const response = await fetch(`/event-ui/view-contributors/${eventID}`);
+            const result = await response.json();
+
+            if (result.message === 'Success') {
+                if (result.data.length === 0) {
+                    listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors found.</td></tr>';
+                    return;
+                }
+                listContainer.innerHTML = result.data.map(c => `
+                    <tr class="hover:bg-white/50 transition-colors">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-3">
+                                <div class="h-8 w-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
+                                    ${(c.targetEmail || '?')[0].toUpperCase()}
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-medium text-slate-700">${c.targetEmail || 'N/A'}</span>
+                                    <span class="text-[10px] text-slate-400 uppercase tracking-tighter">${c.userAccountID || 'Pending Registration'}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2.5 py-1 bg-brand-50 text-brand-600 text-[10px] font-bold rounded-full uppercase tracking-wider border border-brand-100">
+                                ${c.role || 'Member'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <div class="h-1.5 w-1.5 rounded-full ${c.accept_stat === true ? 'bg-emerald-500' : 'bg-amber-400'}"></div>
+                                <span class="text-xs ${c.accept_stat === true ? 'text-emerald-600' : 'text-amber-600'} font-medium">
+                                    ${c.accept_stat === true ? 'Accepted' : 'Pending'}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right flex items-center justify-end gap-1">
+                            <button onclick="openEditRoleModal('${c.id}', '${c.targetEmail || ''}', '${c.role || ''}')" 
+                                class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all" title="Edit Role">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                            </button>
+                            <button onclick="removeContributor('${c.id}')" 
+                                class="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Remove Contributor">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else if (result.message === 'Not Found') {
+                listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400 italic">No contributors have been added yet.</td></tr>';
+            }
+        } catch (error) {
+            console.error('Error loading contributors:', error);
+            listContainer.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-red-500 italic">Failed to load contributors.</td></tr>';
+        }
+    }
+
+    /* --- Invite Modal --- */
+    function openInviteModal() {
+        document.getElementById('inviteModal').classList.remove('hidden');
+    }
+    function closeInviteModal() {
+        document.getElementById('inviteModal').classList.add('hidden');
+        document.getElementById('inviteForm').reset();
+    }
+
+    async function submitInvitation(event) {
+        event.preventDefault();
+        const spinner = document.getElementById('inviteSpinner');
+        spinner.classList.remove('hidden');
+
+        const formData = new FormData(event.target);
+        const data = {
+            eventID: eventID,
+            orgID: orgID,
+            targetEmail: formData.get('targetEmail'),
+            roleName: formData.get('roleName')
+        };
+
+        try {
+            const response = await fetch('/event-ui/send-invitation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (response.ok) {
+                Swal.fire({ title: 'Success!', text: 'Invitation sent successfully.', icon: 'success' });
+                closeInviteModal();
+                loadContributors();
+            } else {
+                Swal.fire({ title: 'Error', text: result.data || 'Failed to send invitation.', icon: 'error' });
+            }
+        } catch (error) {
+            Swal.fire({ title: 'Error', text: 'An unexpected error occurred.', icon: 'error' });
+        } finally {
+            spinner.classList.add('hidden');
+        }
+    }
+
+    /* --- Edit Role Modal --- */
+    function openEditRoleModal(docID, email, currentRole) {
+        document.getElementById('editDocID').value = docID;
+        document.getElementById('editTargetEmail').innerText = email;
+        document.getElementById('editRoleSelect').value = currentRole;
+        document.getElementById('editRoleModal').classList.remove('hidden');
+    }
+    function closeEditRoleModal() {
+        document.getElementById('editRoleModal').classList.add('hidden');
+    }
+
+    async function submitRoleUpdate(event) {
+        event.preventDefault();
+        const spinner = document.getElementById('editSpinner');
+        spinner.classList.remove('hidden');
+
+        const docID = document.getElementById('editDocID').value;
+        const roleName = document.getElementById('editRoleSelect').value;
+
+        try {
+            const response = await fetch(`/event-ui/update-contributor-role/${docID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roleName: roleName })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                Swal.fire({ title: 'Updated!', text: 'Contributor role updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                closeEditRoleModal();
+                loadContributors();
+            } else {
+                Swal.fire({ title: 'Error', text: result.data || 'Failed to update role.', icon: 'error' });
+            }
+        } catch (error) {
+            Swal.fire({ title: 'Error', text: 'An unexpected error occurred.', icon: 'error' });
+        } finally {
+            spinner.classList.add('hidden');
+        }
+    }
+
+    /* --- Remove Contributor --- */
+    async function removeContributor(docID) {
+        const result = await Swal.fire({
+            title: 'Remove contributor?',
+            text: "This person will no longer have access to this event.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Yes, remove them'
+        });
+
+        if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removing...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            try {
+                const response = await fetch(`/event-ui/remove-contributor/${docID}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removed!', text: 'Contributor removed successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    loadContributors();
+                } else {
+                    throw new Error(data.data || "Removal failed");
+                }
+            } catch (error) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+            }
+        }
+    }
+
+    /* =============================================
+     * Task Assignment & Edit Module
+     * ============================================= */
+    let acceptedCollabs = [];
+
+    async function loadTaskCollabs() {
+        try {
+            const response = await fetch(`/event-ui/get-collabs-dropdown/${eventID}`);
+            const result = await response.json();
+            if (result.message === "Success") {
+                acceptedCollabs = result.data.filter(c => c.status === 'Accepted' && c.userAccID);
+                resolveAssigneeNames();
+            }
+        } catch (error) {
+            console.error('Error loading task collabs:', error);
+        }
+    }
+
+    function resolveAssigneeNames() {
+        const containers = document.querySelectorAll('[id^="assignee-"]');
+        containers.forEach(container => {
+            const taskId = container.id.replace('assignee-', '');
+            const taskData = TASK_DATA[taskId];
+            if (!taskData) return;
+
+            const assignedTo = taskData.assigned_to;
+            if (assignedTo && assignedTo !== 'NONE') {
+                const collab = acceptedCollabs.find(c => c.userAccID === assignedTo);
+                if (collab) {
+                    const displayChar = (collab.personName || collab.email || "?")[0].toUpperCase();
+                    const displayName = collab.personName || collab.email;
+                    container.innerHTML = `
+                        <div class="w-5 h-5 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-[8px] font-bold border border-brand-200">
+                            ${displayChar}
+                        </div>
+                        <span class="text-[10px] font-medium text-slate-700">${displayName}</span>
+                    `;
+                }
+            }
+        });
+    }
+
+    /* --- Assign Task Modal --- */
+    function openAssignTaskModal(taskID) {
+        document.getElementById('assignTaskID').value = taskID;
+        const container = document.getElementById('collabsContainer');
+
+        if (acceptedCollabs.length === 0) {
+            container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4 italic">No accepted team members available.</p>';
+        } else {
+            container.innerHTML = acceptedCollabs.map(c => {
+                const displayChar = (c.personName || c.email || "?")[0].toUpperCase();
+                const displayName = c.personName || 'Unnamed User';
+                return `
+                <button onclick="submitTaskAssignment('${taskID}', '${c.userAccID}')" 
+                    class="w-full flex items-center gap-3 p-3 hover:bg-brand-50 rounded-2xl transition-all border border-transparent hover:border-brand-100 text-left group">
+                    <div class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-bold text-xs">
+                        ${displayChar}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-slate-700 group-hover:text-brand-700">${displayName}</p>
+                        <p class="text-[10px] text-slate-400 font-medium">${c.email}</p>
+                    </div>
+                </button>
+            `}).join('');
+        }
+        document.getElementById('assignTaskModal').classList.remove('hidden');
+    }
+
+    function closeAssignTaskModal() {
+        document.getElementById('assignTaskModal').classList.add('hidden');
+    }
+
+    async function submitTaskAssignment(taskID, userID) {
+        if (typeof Swal !== 'undefined') Swal.fire({ title: 'Assigning...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+        try {
+            const response = await fetch(`/event-ui/assign-task/${taskID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userID: userID })
+            });
+            const result = await response.json();
+            if (response.ok) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Assigned!', text: 'User assigned to task successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                closeAssignTaskModal();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(result.data || "Assignment failed");
+            }
+        } catch (error) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+        }
+    }
+
+    /* --- Edit Task Modal --- */
+    function extractDateForInput(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const pad = n => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function openEditTaskModal(taskID) {
+        const task = TASK_DATA[taskID];
+        if (!task) {
+            console.error('Task data not found for ID:', taskID);
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: 'Could not load task data.', icon: 'error' });
+            return;
+        }
+
+        document.getElementById('editTaskID').value = taskID;
+        document.getElementById('editTaskTitle').value = task.title || '';
+        document.getElementById('editTaskDescription').value = task.description || '';
+        document.getElementById('editTaskPriority').value = task.priority || 'medium';
+        document.getElementById('editTaskStatus').value = task.status || 'in progress';
+        document.getElementById('editTaskStartDate').value = extractDateForInput(task.startDate);
+        document.getElementById('editTaskDeadline').value = extractDateForInput(task.deadline);
+
+        document.getElementById('editTaskModal').classList.remove('hidden');
+    }
+
+    function closeEditTaskModal() {
+        document.getElementById('editTaskModal').classList.add('hidden');
+    }
+
+    async function submitTaskUpdate(event) {
+        event.preventDefault();
+        const taskID = document.getElementById('editTaskID').value;
+        const spinner = document.getElementById('editTaskSpinner');
+        spinner.classList.remove('hidden');
+
+        const formData = new FormData(event.target);
+        const data = {};
+
+        formData.forEach((value, key) => {
+            if (value) {
+                if (key === 'startDate' || key === 'deadline') {
+                    data[key] = new Date(value).toISOString();
+                } else {
+                    data[key] = value;
+                }
+            }
+        });
+
+        try {
+            const response = await fetch(`/event-ui/update-task/${taskID}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+            if (response.ok) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Updated!', text: 'Task updated successfully.', icon: 'success', timer: 1500, showConfirmButton: false });
+                closeEditTaskModal();
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(result.data || "Update failed");
+            }
+        } catch (error) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+        } finally {
+            spinner.classList.add('hidden');
+        }
+    }
+
+    /* --- Delete Task --- */
+    async function deleteTask(taskID) {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Deleting...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            try {
+                const response = await fetch(`/event-ui/delete-task/${taskID}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ title: 'Deleted!', text: 'Task has been deleted.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(data.data || "Deletion failed");
+                }
+            } catch (error) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+            }
+        }
+    }
+
+    /* --- Unassign Task --- */
+    async function unassignTask(taskID) {
+        const result = await Swal.fire({
+            title: 'Unassign person?',
+            text: "This will remove the current assignee from this task.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#7c3aed',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Yes, unassign'
+        });
+
+        if (result.isConfirmed) {
+            if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removing assignment...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
+            try {
+                const response = await fetch(`/event-ui/unassign-task/${taskID}`, {
+                    method: 'PUT'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    if (typeof Swal !== 'undefined') Swal.fire({ title: 'Removed!', text: 'Assignment has been removed.', icon: 'success', timer: 1500, showConfirmButton: false });
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    throw new Error(data.data || "Unassignment failed");
+                }
+            } catch (error) {
+                if (typeof Swal !== 'undefined') Swal.fire({ title: 'Error', text: error.message, icon: 'error' });
+            }
+        }
+    }
+
+    /* =============================================
+     * Initialization
+     * ============================================= */
+    if (activeTab === 'tasks') {
+        loadTaskCollabs();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+server:
+  port: 8090
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        name: EVENTRIO_SESSION
+
+spring:
+  application:
+    name: eventrio-web-service
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: false
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  session:
+    store-type: redis
+    redis:
+      namespace: eventrio:session
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:}
+            client-secret: ${GOOGLE_CLIENT_SECRET:}
+            scope:
+              - openid
+              - email
+              - profile
+              - https://www.googleapis.com/auth/calendar.events
+              - https://www.googleapis.com/auth/documents
+              - https://www.googleapis.com/auth/drive.file
+            redirect-uri: "${APP_HOME_URL:http://localhost:8080}/login/oauth2/code/{registrationId}"
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+
+eventrio:
+  services:
+    user-service: ${USER_SERVICE_URL:http://localhost:8082}
+    organization-service: ${ORGANIZATION_SERVICE_URL:http://localhost:8083}
+    event-service: ${EVENT_SERVICE_URL:http://localhost:8084}
+    collaboration-service: ${COLLABORATION_SERVICE_URL:http://localhost:8085}
+    ticketing-service: ${TICKETING_SERVICE_URL:http://localhost:8086}
+    payment-service: ${PAYMENT_SERVICE_URL:http://localhost:8087}
+    notification-service: ${NOTIFICATION_SERVICE_URL:http://localhost:8088}
+    orchestrator-service: ${ORCHESTRATOR_SERVICE_URL:http://localhost:8089}
+  app-home-url: ${APP_HOME_URL:http://localhost:8080}
+
+logging:
+  level:
+    com.eventrio.web: INFO
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info

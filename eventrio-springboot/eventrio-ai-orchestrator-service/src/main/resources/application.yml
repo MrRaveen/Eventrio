@@ -1,0 +1,31 @@
+server:
+  port: 8089
+
+spring:
+  application:
+    name: eventrio-ai-orchestrator-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+eventrio:
+  groq-api-key: ${GROQ_API_KEY:}
+  app-status: ${APP_STATUS:Production}
+  channel-name-orchestrator: ${CHANNEL_NAME_ORCHESTRATOR:orchestrator-channel}
+  notification-channel: ${NOTIFICATION_CHANNEL:notification-channel}
+
+logging:
+  level:
+    com.eventrio.orchestrator: INFO
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info

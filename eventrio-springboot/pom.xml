@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.eventrio</groupId>
+    <artifactId>eventrio-springboot</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Eventrio Spring Boot Microservices</name>
+    <description>Spring Boot microservice conversion of the Eventrio Flask application</description>
+
+    <modules>
+        <module>eventrio-common</module>
+        <module>eventrio-user-service</module>
+        <module>eventrio-organization-service</module>
+        <module>eventrio-event-service</module>
+        <module>eventrio-collaboration-service</module>
+        <module>eventrio-ticketing-service</module>
+        <module>eventrio-payment-service</module>
+        <module>eventrio-notification-service</module>
+        <module>eventrio-ai-orchestrator-service</module>
+        <module>eventrio-web-service</module>
+        <module>eventrio-gateway</module>
+    </modules>
+
+    <properties>
+        <java.version>17</java.version>
+        <spring-cloud.version>2023.0.1</spring-cloud.version>
+        <eventrio.version>1.0.0-SNAPSHOT</eventrio.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.eventrio</groupId>
+                <artifactId>eventrio-common</artifactId>
+                <version>${eventrio.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+</project>

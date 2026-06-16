@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{base :: layout(~{::section})}">
+<body>
+<section th:fragment="section">
+<style>
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .hero-animate { opacity:0; animation: fadeUp 0.7s ease forwards; }
+    .a1{animation-delay:.1s} .a2{animation-delay:.2s} .a3{animation-delay:.3s} .a4{animation-delay:.4s} .a5{animation-delay:.5s}
+</style>
+
+<section class="relative flex flex-col items-center justify-center min-h-screen overflow-hidden px-6 py-20 text-center" style="background:var(--bg-body);">
+
+    <!-- Content -->
+    <div class="relative z-10 max-w-3xl">
+        <!-- Eyebrow -->
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-8 hero-animate a1 ev-badge ev-badge-brand">
+            <span class="w-1.5 h-1.5 rounded-full animate-pulse" style="background:var(--brand-solid);"></span>
+            <span class="text-xs font-bold uppercase tracking-widest">AI-Powered Event Automation</span>
+        </div>
+
+        <!-- Headline -->
+        <h1 class="hero-animate a2 text-5xl md:text-6xl font-extrabold tracking-tighter leading-[1.1] mb-6" style="color:var(--text-primary);">
+            Orchestrate events with<br><span style="color:var(--brand-solid);">intelligent precision.</span>
+        </h1>
+
+        <p class="hero-animate a3 text-lg font-medium max-w-xl mx-auto leading-relaxed mb-10" style="color:var(--text-secondary);">
+            Streamline your entire event lifecycle. From registration to post-event engagement — powered by AI automation.
+        </p>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 hero-animate a4">
+            <a th:href="@{/login}" class="ev-btn ev-btn-primary py-4 px-8 text-base rounded-xl">
+                Start Orchestrating
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </a>
+            <a th:href="@{/browse-events}" class="ev-btn ev-btn-ghost py-4 px-8 text-base rounded-xl">
+                Explore Events
+            </a>
+        </div>
+
+        <!-- Preview card -->
+        <div class="hero-animate a5 mt-16 mx-auto max-w-2xl w-full">
+            <div class="ev-card p-0 rounded-2xl overflow-hidden" style="box-shadow:var(--shadow-lg);">
+                <!-- Fake browser bar -->
+                <div class="flex items-center gap-2 px-4 py-3" style="background:var(--bg-surface); border-bottom:1px solid var(--border);">
+                    <span class="w-3 h-3 rounded-full bg-red-400 opacity-50"></span>
+                    <span class="w-3 h-3 rounded-full bg-yellow-400 opacity-50"></span>
+                    <span class="w-3 h-3 rounded-full bg-green-400 opacity-50"></span>
+                    <div class="mx-auto w-40 h-4 rounded" style="background:var(--bg-hover);"></div>
+                </div>
+                <!-- Fake dashboard content -->
+                <div class="flex" style="min-height:160px;">
+                    <div class="w-36 p-4 space-y-3" style="background:var(--bg-sidebar); border-right:1px solid var(--border);">
+                        <div class="h-3 rounded" style="background:var(--brand-solid);opacity:0.6;width:80%;"></div>
+                        <div class="h-3 rounded" style="background:var(--bg-hover);width:90%;"></div>
+                        <div class="h-3 rounded" style="background:var(--bg-hover);width:70%;"></div>
+                        <div class="h-3 rounded" style="background:var(--bg-hover);width:85%;"></div>
+                    </div>
+                    <div class="flex-1 p-4 space-y-3">
+                        <div class="flex gap-3">
+                            <div class="h-16 rounded-lg flex-1" style="background:var(--brand-bg); border:1px solid var(--brand-border);"></div>
+                            <div class="h-16 rounded-lg flex-1" style="background:var(--brand-bg); border:1px solid var(--brand-border);"></div>
+                            <div class="h-16 rounded-lg flex-1" style="background:var(--brand-bg); border:1px solid var(--brand-border);"></div>
+                        </div>
+                        <div class="h-3 rounded w-3/4" style="background:var(--bg-hover);"></div>
+                        <div class="h-3 rounded w-1/2" style="background:var(--bg-surface);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme toggle (bottom corner) -->
+    <div class="fixed bottom-6 right-6 z-50">
+        <button onclick="toggleTheme()" class="theme-toggle" style="width:auto; padding:10px 14px; border-radius:99px; box-shadow:var(--shadow-md);">
+            <svg class="theme-icon-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M16.95 16.95l.707.707M7.05 7.05l.707.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+            <svg class="theme-icon-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+        </button>
+    </div>
+</section>
+
+</section>
+</body>
+</html>

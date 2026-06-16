@@ -1,0 +1,155 @@
+<div xmlns:th="http://www.thymeleaf.org" th:fragment="tasks">
+<!-- Tasks Tab Component -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2">
+        <section class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+
+            <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
+                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <h3 class="text-sm font-medium text-slate-500">Generated tasks</h3>
+            </div>
+
+            <th:block th:if="${event_tasks != null and !event_tasks.isEmpty()}">
+            <ul class="divide-y divide-slate-100">
+                <th:block th:each="task : ${event_tasks}">
+                
+                <li th:with="s=${task.status instanceof T(java.lang.String) ? task.status : task.status.value}"
+                    class="group flex items-start gap-4 px-5 py-4 hover:bg-white transition-colors task-item"
+                    data-task-id="[[${task.id}]]">
+
+                    <!-- Accent bar -->
+                    <div class="w-0.5 self-stretch rounded-full flex-shrink-0 min-h-[44px]"
+                        th:classappend="${s == 'in progress' ? 'bg-amber-300' : (s == 'done' ? 'bg-emerald-400' : 'bg-blue-200')}">
+                    </div>
+
+                    <!-- Body -->
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-1 flex-wrap">
+                            <span class="text-[15px] font-medium text-slate-800">[[${task.title}]]</span>
+                            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                                th:classappend="${s == 'in progress' ? 'bg-amber-50 text-amber-800' : (s == 'done' ? 'bg-emerald-50 text-emerald-800' : 'bg-blue-50 text-blue-800')}">
+                                [[${task.status instanceof T(java.lang.String) ? task.status : task.status.value}]]
+                            </span>
+                        </div>
+
+                        <th:block th:if="${task.description != null and !#strings.isEmpty(task.description)}">
+                        <p class="text-[13px] text-slate-500 truncate mb-2.5">[[${task.description}]]</p>
+                        </th:block>
+
+                        <div class="flex items-center gap-4 flex-wrap">
+                            <th:block th:if="${task.startDate != null or task.deadline != null}">
+                            <div class="flex items-center gap-3">
+                                <th:block th:if="${task.startDate != null}">
+                                <span class="text-xs text-slate-400">
+                                    Start <span class="text-slate-600 font-medium">
+                                        [[${task.startDate != null and task.startDate instanceof T(java.lang.String) == false ? #temporals.format(task.startDate, 'MMM dd') : task.startDate}]]
+                                    </span>
+                                </span>
+                                </th:block>
+                                <th:block th:if="${task.deadline != null}">
+                                <span class="text-xs text-slate-400">
+                                    Due <span class="text-emerald-600 font-medium">
+                                        [[${task.deadline != null and task.deadline instanceof T(java.lang.String) == false ? #temporals.format(task.deadline, 'MMM dd') : task.deadline}]]
+                                    </span>
+                                </span>
+                                </th:block>
+                            </div>
+                            <div class="w-px h-4 bg-slate-200"></div>
+                            </th:block>
+
+                            <div id="assignee-[[${task.id}]]" class="flex items-center gap-1.5">
+                                <div class="w-[22px] h-[22px] rounded-full flex items-center justify-center text-[11px] font-medium" th:classappend="${(task.assigned_to != null and task.assigned_to != 'NONE') ? 'bg-emerald-50 text-emerald-800' : 'bg-slate-100 text-slate-400'}">
+                                    [[${task.assigned_to != null and task.assigned_to != 'NONE' ? #strings.toUpperCase(#strings.substring(task.assigned_to,0,1)) : '?'}]]
+                                </div>
+                                <span
+                                    class="text-xs" th:classappend="${(task.assigned_to != null and task.assigned_to != 'NONE') ? 'text-slate-600' : 'text-slate-400 italic'}">
+                                    [[${task.assigned_to != null and task.assigned_to != 'NONE' ? task.assigned_to : 'Unassigned'}]]
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div
+                        class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pt-0.5">
+                        <button onclick="openAssignTaskModal('[[${task.id}]]')" title="Assign"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                        </button>
+                        <th:block th:if="${task.assigned_to != null and task.assigned_to != 'NONE'}">
+                        <button onclick="unassignTask('[[${task.id}]]')" title="Unassign"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-orange-600 hover:bg-orange-50 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+                            </svg>
+                        </button>
+                        </th:block>
+                        <button onclick="openEditTaskModal('[[${task.id}]]')" title="Edit"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                        </button>
+                        <button onclick="deleteTask('[[${task.id}]]')" title="Delete"
+                            class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+                </th:block>
+            </ul>
+            </th:block><th:block th:unless="${event_tasks == null or event_tasks.isEmpty()}">
+            <p class="py-10 text-center text-sm italic text-slate-400">No tasks generated yet.</p>
+            </th:block>
+
+        </section>
+    </div>
+
+    <!-- Schedule sidebar -->
+    <div>
+        <section class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+            <div class="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
+                <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <h3 class="text-sm font-medium text-slate-500">Schedule</h3>
+            </div>
+            <div class="p-5 flex flex-col gap-4">
+                <div class="flex flex-col gap-1">
+                    <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Starts</span>
+                    <span class="text-[15px] font-medium text-slate-700">
+                        <th:block th:if="${event.startDate != null}">[[${#temporals.format(event.startDate, 'MMM dd, yyyy')}]]</th:block><th:block th:unless="${event.startDate != null}">TBD</th:block>
+                    </span>
+                    <th:block th:if="${event.startDate != null}">
+                    <span class="text-xs text-slate-400">[[${#temporals.format(event.startDate, 'hh:mm a')}]]</span>
+                    </th:block>
+                </div>
+                <div class="h-px bg-slate-100"></div>
+                <div class="flex flex-col gap-1">
+                    <span class="text-[11px] font-medium uppercase tracking-wider text-slate-400">Ends</span>
+                    <span class="text-[15px] font-medium text-slate-700">
+                        <th:block th:if="${event.endDate != null}">[[${#temporals.format(event.endDate, 'MMM dd, yyyy')}]]</th:block><th:block th:unless="${event.endDate != null}">TBD</th:block>
+                    </span>
+                    <th:block th:if="${event.endDate != null}">
+                    <span class="text-xs text-slate-400">[[${#temporals.format(event.endDate, 'hh:mm a')}]]</span>
+                    </th:block>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+</div>

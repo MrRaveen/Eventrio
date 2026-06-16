@@ -1,0 +1,31 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: eventrio-collaboration-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+
+mailjet:
+  api-url: https://api.mailjet.com/v3.1/send
+  api-key-public: ${MJ_APIKEY_PUBLIC:}
+  api-key-private: ${MJ_APIKEY_PRIVATE:}
+  sender-email: ${MAILJET_SENDER_EMAIL:}
+
+app:
+  home-url: ${APP_HOME_URL:http://localhost:5000}
+
+logging:
+  level:
+    com.eventrio.collaborationservice: INFO
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info

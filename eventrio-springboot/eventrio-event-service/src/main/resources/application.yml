@@ -1,0 +1,22 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: eventrio-event-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+
+logging:
+  level:
+    com.eventrio.eventservice: INFO
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info

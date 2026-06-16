@@ -1,0 +1,29 @@
+{
+    "main_steps": [
+        {
+            "name": "ai_tasks",
+            "function_name": "execute_workflow",
+            "fallback_functions": []
+        },
+        {
+            "name": "create_google_doc",
+            "function_name": "create_google_doc_for_event",
+            "fallback_functions": []
+        },
+        {
+            "name": "google_meet",
+            "function_name": "automate_google_meet",
+            "fallback_functions": []
+        },
+        {
+            "name": "fb_page",
+            "function_name": "post_image_to_facebook_page",
+            "fallback_functions": []
+        },
+        {
+            "name": "google_calendar",
+            "function_name": "schedule_real_google_calendar",
+            "fallback_functions": []
+        }
+    ]
+}

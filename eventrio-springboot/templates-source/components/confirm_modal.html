@@ -1,0 +1,77 @@
+<!-- Reusable Confirmation Modal -->
+<div id="confirmModal"
+    class="fixed inset-0 z-[100] hidden ev-modal-overlay flex items-center justify-center p-4">
+    <div class="ev-modal w-full max-w-md scale-95 opacity-0 transition-all duration-200"
+        id="confirmModalContent">
+        <div class="p-6 flex justify-between items-center" style="border-bottom:1px solid var(--border);">
+            <h3 class="text-xl font-bold" style="color:var(--text-primary);" id="confirmModalTitle">Are you sure?</h3>
+            <button onclick="closeConfirmModal()"
+                class="p-1 rounded-md transition-colors" style="color:var(--text-muted);">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <p style="color:var(--text-secondary);" id="confirmModalMessage">This action cannot be undone.</p>
+        </div>
+        <div class="p-6 flex gap-3 justify-end" style="border-top:1px solid var(--border);">
+            <button onclick="closeConfirmModal()" class="ev-btn ev-btn-ghost">
+                Cancel
+            </button>
+            <button id="confirmModalActionBtn"
+                class="ev-btn" style="background:#ef4444;color:#fff;">
+                Confirm
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let onConfirmCallback = null;
+
+    function openConfirmModal(title, message, confirmBtnText, onConfirm, type = 'danger') {
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalMessage').innerText = message;
+        
+        const actionBtn = document.getElementById('confirmModalActionBtn');
+        actionBtn.innerText = confirmBtnText;
+        
+        if (type === 'danger') {
+            actionBtn.style.background = '#ef4444';
+        } else {
+            actionBtn.style.background = 'var(--brand-solid)';
+        }
+        actionBtn.style.color = '#fff';
+
+        onConfirmCallback = onConfirm;
+
+        const modal = document.getElementById('confirmModal');
+        const modalContent = document.getElementById('confirmModalContent');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeConfirmModal() {
+        const modal = document.getElementById('confirmModal');
+        const modalContent = document.getElementById('confirmModalContent');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 200);
+    }
+
+    document.getElementById('confirmModalActionBtn').onclick = function() {
+        if (onConfirmCallback) {
+            onConfirmCallback();
+        }
+        closeConfirmModal();
+    };
+</script>

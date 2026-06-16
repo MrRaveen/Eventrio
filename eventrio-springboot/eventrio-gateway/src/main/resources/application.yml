@@ -1,0 +1,107 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: eventrio-gateway
+  cloud:
+    gateway:
+      forwarded:
+        enabled: true
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+      routes:
+        # ── User service (8082) ──────────────────────────────────────────────
+        - id: user-api
+          uri: ${GATEWAY_USER_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/users/**
+
+        - id: user-oauth-connect
+          uri: ${GATEWAY_USER_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/connect/**
+
+        - id: user-oauth-callbacks
+          uri: ${GATEWAY_USER_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/callbacks/**
+
+        # ── BFF proxy via web service (8090) – session headers + path rewrite ──
+        - id: main-dashboard
+          uri: ${GATEWAY_WEB_SERVICE_URI:http://localhost:8090}
+          predicates:
+            - Path=/main-dashboard/**
+
+        - id: event-ui
+          uri: ${GATEWAY_WEB_SERVICE_URI:http://localhost:8090}
+          predicates:
+            - Path=/event-ui/**
+
+        # ── User service (8082) – direct API / OAuth only ───────────────────
+        - id: customer
+          uri: ${GATEWAY_TICKETING_SERVICE_URI:http://localhost:8086}
+          predicates:
+            - Path=/customer/**
+
+        # ── Payment (8087) ─────────────────────────────────────────────────
+        - id: payment
+          uri: ${GATEWAY_PAYMENT_SERVICE_URI:http://localhost:8087}
+          predicates:
+            - Path=/payment/**
+
+        # ── Notifications / SSE (8088) ───────────────────────────────────
+        - id: stream
+          uri: ${GATEWAY_NOTIFICATION_SERVICE_URI:http://localhost:8088}
+          predicates:
+            - Path=/stream
+
+        - id: notify
+          uri: ${GATEWAY_NOTIFICATION_SERVICE_URI:http://localhost:8088}
+          predicates:
+            - Path=/notify
+
+        - id: notifications
+          uri: ${GATEWAY_NOTIFICATION_SERVICE_URI:http://localhost:8088}
+          predicates:
+            - Path=/notifications/**
+
+        # ── AI orchestrator (8089) ─────────────────────────────────────────
+        - id: ai
+          uri: ${GATEWAY_ORCHESTRATOR_SERVICE_URI:http://localhost:8089}
+          predicates:
+            - Path=/ai/**
+
+        - id: testing
+          uri: ${GATEWAY_ORCHESTRATOR_SERVICE_URI:http://localhost:8089}
+          predicates:
+            - Path=/testing/**
+
+        - id: test-push
+          uri: ${GATEWAY_ORCHESTRATOR_SERVICE_URI:http://localhost:8089}
+          predicates:
+            - Path=/test-push
+
+        # ── Web UI – catch-all (8090) ──────────────────────────────────────
+        - id: web-default
+          uri: ${GATEWAY_WEB_SERVICE_URI:http://localhost:8090}
+          predicates:
+            - Path=/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway

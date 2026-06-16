@@ -1,0 +1,311 @@
+# Eventrio – full stack in Docker Desktop
+# Start:  docker compose up -d --build   OR   .\scripts\docker-up.ps1
+# Stop:   .\scripts\docker-down.ps1        (fast force-stop)
+# Logs:   docker compose logs -f eventrio-gateway
+
+x-stop-grace-period: &stop-grace
+  stop_grace_period: 10s
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: eventrio-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - eventrio-redis-data:/data
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+
+  mongodb:
+    image: mongo:7
+    container_name: eventrio-mongodb
+    profiles: [local-db]
+    ports:
+      - "27017:27017"
+    volumes:
+      - eventrio-mongo-data:/data/db
+    <<: *stop-grace
+
+  eventrio-user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-user-service
+    image: eventrio/user-service:latest
+    container_name: eventrio-user-service
+    ports:
+      - "8082:8082"
+    env_file: .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8082/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-organization-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-organization-service
+    image: eventrio/organization-service:latest
+    container_name: eventrio-organization-service
+    ports:
+      - "8083:8083"
+    env_file: .env
+    environment:
+      USER_SERVICE_URL: http://eventrio-user-service:8082
+    depends_on:
+      eventrio-user-service:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8083/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-event-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-event-service
+    image: eventrio/event-service:latest
+    container_name: eventrio-event-service
+    ports:
+      - "8084:8084"
+    env_file: .env
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8084/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-collaboration-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-collaboration-service
+    image: eventrio/collaboration-service:latest
+    container_name: eventrio-collaboration-service
+    ports:
+      - "8085:8085"
+    env_file: .env
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8085/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-ticketing-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-ticketing-service
+    image: eventrio/ticketing-service:latest
+    container_name: eventrio-ticketing-service
+    ports:
+      - "8086:8086"
+    env_file: .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8086/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-payment-service
+    image: eventrio/payment-service:latest
+    container_name: eventrio-payment-service
+    ports:
+      - "8087:8087"
+    env_file: .env
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8087/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-notification-service
+    image: eventrio/notification-service:latest
+    container_name: eventrio-notification-service
+    ports:
+      - "8088:8088"
+    env_file: .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8088/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-ai-orchestrator-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-ai-orchestrator-service
+    image: eventrio/ai-orchestrator-service:latest
+    container_name: eventrio-ai-orchestrator-service
+    ports:
+      - "8089:8089"
+    env_file: .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8089/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-web-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-web-service
+    image: eventrio/web-service:latest
+    container_name: eventrio-web-service
+    ports:
+      - "8090:8090"
+    env_file: .env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      USER_SERVICE_URL: http://eventrio-user-service:8082
+      ORGANIZATION_SERVICE_URL: http://eventrio-organization-service:8083
+      EVENT_SERVICE_URL: http://eventrio-event-service:8084
+      COLLABORATION_SERVICE_URL: http://eventrio-collaboration-service:8085
+      TICKETING_SERVICE_URL: http://eventrio-ticketing-service:8086
+      PAYMENT_SERVICE_URL: http://eventrio-payment-service:8087
+      NOTIFICATION_SERVICE_URL: http://eventrio-notification-service:8088
+      ORCHESTRATOR_SERVICE_URL: http://eventrio-ai-orchestrator-service:8089
+      APP_HOME_URL: http://localhost:8080
+    depends_on:
+      redis:
+        condition: service_started
+      eventrio-user-service:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8090/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+  eventrio-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        MODULE: eventrio-gateway
+    image: eventrio/gateway:latest
+    container_name: eventrio-gateway
+    ports:
+      - "8080:8080"
+    env_file: .env
+    environment:
+      GATEWAY_USER_SERVICE_URI: http://eventrio-user-service:8082
+      GATEWAY_ORGANIZATION_SERVICE_URI: http://eventrio-organization-service:8083
+      GATEWAY_EVENT_SERVICE_URI: http://eventrio-event-service:8084
+      GATEWAY_COLLABORATION_SERVICE_URI: http://eventrio-collaboration-service:8085
+      GATEWAY_TICKETING_SERVICE_URI: http://eventrio-ticketing-service:8086
+      GATEWAY_PAYMENT_SERVICE_URI: http://eventrio-payment-service:8087
+      GATEWAY_NOTIFICATION_SERVICE_URI: http://eventrio-notification-service:8088
+      GATEWAY_ORCHESTRATOR_SERVICE_URI: http://eventrio-ai-orchestrator-service:8089
+      GATEWAY_WEB_SERVICE_URI: http://eventrio-web-service:8090
+    depends_on:
+      eventrio-user-service:
+        condition: service_started
+      eventrio-organization-service:
+        condition: service_started
+      eventrio-event-service:
+        condition: service_started
+      eventrio-collaboration-service:
+        condition: service_started
+      eventrio-ticketing-service:
+        condition: service_started
+      eventrio-payment-service:
+        condition: service_started
+      eventrio-notification-service:
+        condition: service_started
+      eventrio-ai-orchestrator-service:
+        condition: service_started
+      eventrio-web-service:
+        condition: service_started
+    <<: *stop-grace
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+
+volumes:
+  eventrio-mongo-data:
+  eventrio-redis-data:

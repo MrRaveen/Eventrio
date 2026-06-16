@@ -1,0 +1,24 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: eventrio-notification-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+notification:
+  channel: ${NOTIFICATION_CHANNEL:orchestrator-notifications}
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info

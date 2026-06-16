@@ -1,0 +1,13 @@
+target/
+logs/
+.git/
+.gitignore
+*.md
+templates-source/
+convert_templates.py
+scripts/
+.env
+.env.example
+docker-compose*.yml
+Dockerfile
+**/node_modules/

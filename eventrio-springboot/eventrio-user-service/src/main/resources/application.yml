@@ -1,0 +1,25 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: eventrio-user-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+
+eventrio:
+  facebook:
+    app-id: ${FACEBOOK_APP_ID:}
+    app-secret: ${FACEBOOK_APP_SECRET:}
+    redirect-uri: ${FACEBOOK_REDIRECT_URI:http://localhost:8082/callbacks/meta}
+    success-redirect-uri: ${FACEBOOK_SUCCESS_REDIRECT_URI:http://localhost:8080/dashboard?tab=social_setup}
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info

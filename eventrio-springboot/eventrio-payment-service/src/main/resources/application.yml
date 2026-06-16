@@ -1,0 +1,25 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: eventrio-payment-service
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://localhost:27017/EventrioOfficial}
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+
+app:
+  home-url: ${APP_HOME_URL:http://localhost:8080}
+
+management:
+  health:
+    mongo:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: health,info
