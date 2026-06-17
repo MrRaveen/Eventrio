@@ -5,29 +5,63 @@ from app.orchestrator.saga.engine import engine
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
 from openai import AsyncOpenAI
+import grpc
+from grpc_servers.user_handle_agent.app.proto import agent_pb2
+from grpc_servers.user_handle_agent.app.proto import agent_pb2_grpc
 
 ai_routes_bp = Blueprint('ai_routes', __name__)
-
-kernel = Kernel()
 
 @ai_routes_bp.route('/test-agent', methods=['POST'])
 def test_agent():
     try:
-        client = AsyncOpenAI(
-            api_key=os.getenv("GROQ_API_KEY"),
-            base_url="https://api.groq.com/openai/v1"
-        )
-        service = OpenAIChatCompletion(
-            service_id="groq",
-            ai_model_id="llama-3.1-8b-instant",   
-            async_client=client
-        )
+        address = os.getenv('USER_AGENT_GRPC', 'localhost:50051')
+        data = request.json or {}
+        
+        user_id = data.get('userID') or data.get('user_id') or 'unknown_user'
+        query = data.get('query') or data.get('prompt') or ''
 
-        kernel.add_service(service)
-        result = asyncio.run(kernel.invoke_prompt("Summarise the latest news in 3 bullet points"))
-        return str(result)
+        if not query:
+            return jsonify({"error": "query or prompt is required"}), 400
+
+        with grpc.insecure_channel(address) as channel:
+            stub = agent_pb2_grpc.AgentServiceStub(channel)
+            grpc_request = agent_pb2.AgentRequest(
+                user_id=user_id,
+                query=query
+            )
+            response = stub.RunAgent(grpc_request)
+            
+            if response.error:
+                return jsonify({"error": response.error, "is_complete": False}), 500
+
+            return jsonify({
+                "response": response.response,
+                "is_complete": response.is_complete
+            })
     except Exception as e:
-        return str(e)    
+        return jsonify({"error": str(e)}), 500
+
+
+# kernel = Kernel()
+
+# @ai_routes_bp.route('/test-agent', methods=['POST'])
+# def test_agent():
+#     try:
+#         client = AsyncOpenAI(
+#             api_key=os.getenv("GROQ_API_KEY"),
+#             base_url="https://api.groq.com/openai/v1"
+#         )
+#         service = OpenAIChatCompletion(
+#             service_id="groq",
+#             ai_model_id="llama-3.1-8b-instant",   
+#             async_client=client
+#         )
+
+#         kernel.add_service(service)
+#         result = asyncio.run(kernel.invoke_prompt("Summarise the latest news in 3 bullet points"))
+#         return str(result)
+#     except Exception as e:
+#         return str(e)    
 
 
 @ai_routes_bp.route('/generate-event', methods=['POST'])

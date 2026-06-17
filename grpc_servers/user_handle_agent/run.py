@@ -1,6 +1,10 @@
-from app import create_app
+import asyncio
+from app.routes.mainAgentAccess import serve
+import os
+from flask import Flask
+from dotenv import load_dotenv
 
-app = create_app()
-
+#only the GRPC server (not a flask server)
 if __name__ == "__main__":
-    app.run(debug=True, port=5002)
+    load_dotenv()  
+    asyncio.run(serve())

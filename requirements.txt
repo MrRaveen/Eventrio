@@ -45,3 +45,5 @@ celery
 flask_limiter
 Flask-APScheduler
 semantic-kernel
+grpcio 
+grpcio-tools

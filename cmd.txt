@@ -5,7 +5,8 @@ curl -X POST http://localhost:5001/test-workflow   -H "Content-Type: application
     "user_id": "test_user_001",
     "prompt": "Organize a local 3-day Python coding bootcamp."
   }'
-
-
+cd grpc_servers/user_handle_agent
+python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. agent.proto
+python run.py
 
 

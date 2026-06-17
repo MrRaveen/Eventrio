@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package agent;
+
+// The service definition
+service AgentService {
+  // Unary RPC: one request, one response
+  rpc RunAgent (AgentRequest) returns (AgentResponse);
+}
+
+// The request message (what client sends)
+message AgentRequest {
+  string user_id = 1;
+  string query = 2;
+}
+
+// The response message (what server returns)
+message AgentResponse {
+  string response = 1;
+  bool is_complete = 2;
+  optional string error = 3;
+}

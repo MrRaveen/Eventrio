@@ -1,1 +1,12 @@
 Flask
+grpcio 
+grpcio-tools
+asyncio
+gunicorn
+python-dotenv
+semantic-kernel
+langgraph 
+langchain-core 
+langchain-groq
+openai
+
