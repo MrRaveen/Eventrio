@@ -1,55 +1,81 @@
-import os
 import grpc
-from semantic_kernel import Kernel
-from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
-from openai import AsyncOpenAI
+import traceback
+from semantic_kernel.contents import ChatHistory
+from semantic_kernel.connectors.ai.open_ai import (
+    OpenAIChatCompletion,
+    OpenAIChatPromptExecutionSettings,
+)
 from app.proto import agent_pb2_grpc
 from app.proto import agent_pb2
+from app.agents.core.mainAgent import MainAgent, AGENT_INSTRUCTIONS
 
 
 class AgentServicer(agent_pb2_grpc.AgentServiceServicer):
     """gRPC Servicer: handles RunAgent unary RPC calls."""
 
     async def RunAgent(self, request, context):
-        """Execute the agent with the provided query and return a response."""
+        """Execute the agent with pre-fetched RAG context."""
         try:
-            kernel = Kernel()
+            agent_manager = MainAgent()
 
-            client = AsyncOpenAI(
-                api_key=os.getenv("GROQ_API_KEY"),
-                base_url="https://api.groq.com/openai/v1"
+            # ── Step 1: Retrieve RAG context directly (no LLM tool-calling) ──
+            rag_context = agent_manager.retrieve_context(
+                event_id=request.eventID,
+                query=request.query,
             )
-            service = OpenAIChatCompletion(
-                service_id="groq",
-                ai_model_id="llama-3.1-8b-instant",
-                async_client=client
+            print(f"[RAG] Retrieved context ({len(rag_context)} chars)", flush=True)
+
+            # ── Step 2: Build augmented system prompt ──
+            if rag_context:
+                system_msg = (
+                    f"{AGENT_INSTRUCTIONS}\n\n"
+                    f"--- Retrieved Event Context ---\n{rag_context}\n"
+                    f"--- End of Context ---"
+                )
+            else:
+                system_msg = (
+                    f"{AGENT_INSTRUCTIONS}\n\n"
+                    "(No context was retrieved from the database for this query.)"
+                )
+
+            history = ChatHistory()
+            history.add_system_message(system_msg)
+            history.add_user_message(request.query)
+
+            # ── Step 3: Call LLM — no tools registered, plain completion ──
+            kernel = agent_manager.get_kernel()
+            settings = OpenAIChatPromptExecutionSettings()
+            chat_service: OpenAIChatCompletion = kernel.get_service(
+                type=OpenAIChatCompletion
             )
-            kernel.add_service(service)
+            result = await chat_service.get_chat_message_contents(
+                chat_history=history,
+                settings=settings,
+            )
 
-            # invoke_prompt is a coroutine — await it, don't wrap in asyncio.run()
-            result = await kernel.invoke_prompt(request.query)
-
+            response_text = result[-1].content if result else ""
             return agent_pb2.AgentResponse(
-                response=str(result),
-                is_complete=True
+                response=response_text,
+                is_complete=True,
             )
+
         except Exception as e:
+            full_trace = traceback.format_exc()
+            print(f"[RunAgent ERROR]\n{full_trace}", flush=True)
             context.set_code(grpc.StatusCode.INTERNAL)
             context.set_details(str(e))
             return agent_pb2.AgentResponse(
                 response="",
                 is_complete=False,
-                error=str(e)
+                error=str(e),
             )
 
 
 async def serve():
     """Start the async gRPC server and block until termination."""
     server = grpc.aio.server()
-    agent_pb2_grpc.add_AgentServiceServicer_to_server(
-        AgentServicer(), server
-    )
+    agent_pb2_grpc.add_AgentServiceServicer_to_server(AgentServicer(), server)
     server.add_insecure_port("[::]:50051")
     await server.start()
-    print("GRPC Server 1 started")
+    print("GRPC Server 1 started", flush=True)
     await server.wait_for_termination()

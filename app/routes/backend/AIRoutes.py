@@ -17,7 +17,7 @@ def test_agent():
         address = os.getenv('USER_AGENT_GRPC', 'localhost:50051')
         data = request.json or {}
         
-        user_id = data.get('userID') or data.get('user_id') or 'unknown_user'
+        event_id = data.get('eventID') or data.get('event_id') or 'unknown_event'
         query = data.get('query') or data.get('prompt') or ''
 
         if not query:
@@ -26,7 +26,7 @@ def test_agent():
         with grpc.insecure_channel(address) as channel:
             stub = agent_pb2_grpc.AgentServiceStub(channel)
             grpc_request = agent_pb2.AgentRequest(
-                user_id=user_id,
+                eventID=event_id,
                 query=query
             )
             response = stub.RunAgent(grpc_request)

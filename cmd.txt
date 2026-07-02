@@ -7,6 +7,7 @@ curl -X POST http://localhost:5001/test-workflow   -H "Content-Type: application
   }'
 cd grpc_servers/user_handle_agent
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. agent.proto
-python run.py
+# IMPORTANT: always use the venv python so sentence_transformers and other deps are available
+source venv/bin/activate && python run.py
 
 

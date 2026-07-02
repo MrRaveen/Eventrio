@@ -10,7 +10,7 @@ service AgentService {
 
 // The request message (what client sends)
 message AgentRequest {
-  string user_id = 1;
+  string eventID = 1;
   string query = 2;
 }
 
