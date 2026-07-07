@@ -9,5 +9,7 @@ cd grpc_servers/user_handle_agent
 python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. agent.proto
 # IMPORTANT: always use the venv python so sentence_transformers and other deps are available
 source venv/bin/activate && python run.py
-
+cloudflared tunnel --url http://localhost:8080
+npx webpack
+npx http-server ./app/src -p 8080
 

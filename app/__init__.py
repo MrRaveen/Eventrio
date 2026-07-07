@@ -7,10 +7,10 @@ if app_status == "Development":
     from app.inspector.execute import execute
     execute()
 from flask import Flask
+from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_apscheduler import APScheduler
 scheduler = APScheduler()
-
 def create_app():
     cloudinary.config(
     cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
@@ -18,6 +18,9 @@ def create_app():
     api_secret=os.getenv('CLOUDINARY_API_SECRET')
     )
     app = Flask(__name__, template_folder='templates', static_folder='static')
+
+    # Enable CORS for all routes - required for Google Meet add-on (cross-origin requests)
+    CORS(app, origins="*", supports_credentials=False)
 
     scheduler.init_app(app)
     scheduler.start()

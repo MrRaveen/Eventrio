@@ -18,14 +18,13 @@ class AgentServicer(agent_pb2_grpc.AgentServiceServicer):
         try:
             agent_manager = MainAgent()
 
-            # ── Step 1: Retrieve RAG context directly (no LLM tool-calling) ──
+            #Retrieve RAG context directly (no LLM tool-calling) ──
             rag_context = agent_manager.retrieve_context(
                 event_id=request.eventID,
                 query=request.query,
             )
-            print(f"[RAG] Retrieved context ({len(rag_context)} chars)", flush=True)
 
-            # ── Step 2: Build augmented system prompt ──
+            #Build augmented system prompt ──
             if rag_context:
                 system_msg = (
                     f"{AGENT_INSTRUCTIONS}\n\n"
@@ -42,12 +41,17 @@ class AgentServicer(agent_pb2_grpc.AgentServiceServicer):
             history.add_system_message(system_msg)
             history.add_user_message(request.query)
 
-            # ── Step 3: Call LLM — no tools registered, plain completion ──
+            #Call LLM — no tools registered, plain completion ──
             kernel = agent_manager.get_kernel()
             settings = OpenAIChatPromptExecutionSettings()
+            #The code queries the Kernel for the registered OpenAI service.
             chat_service: OpenAIChatCompletion = kernel.get_service(
                 type=OpenAIChatCompletion
             )
+            # This is the execution trigger. The OpenAIChatCompletion service takes the standardized, 
+            # framework-agnostic objects (history and settings), 
+            # translates them into the specific JSON payload required by OpenAI's
+            # REST API, makes the asynchronous network call, and parses the response back into a Semantic Kernel object.
             result = await chat_service.get_chat_message_contents(
                 chat_history=history,
                 settings=settings,

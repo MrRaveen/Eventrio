@@ -47,3 +47,4 @@ Flask-APScheduler
 semantic-kernel
 grpcio 
 grpcio-tools
+Flask-Cors
