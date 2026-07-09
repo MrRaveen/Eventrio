@@ -243,13 +243,167 @@
             align-items: center;
             gap: 4px;
         }
+
+        /* Header Button Styles */
+        .header-btn {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            outline: none;
+        }
+
+        .header-btn:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .header-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(15, 23, 42, 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 440px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 16px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: #475569;
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: #0f172a;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .modal p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 0;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .url-box {
+            display: flex;
+            gap: 8px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+            border-radius: 10px;
+        }
+
+        .url-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            color: #334155;
+            font-family: inherit;
+        }
+
+        .url-box button {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .url-box button:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 
 <body>
     <div class="header">
         <h1>Eventrio AI Assistant</h1>
-        <span class="status" id="connection-status">Connecting...</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="meeting-url-btn" class="header-btn" style="display: none;">
+                <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: currentColor; vertical-align: middle;">
+                    <path
+                        d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z">
+                    </path>
+                </svg>
+                Meeting Info
+            </button>
+            <span class="status" id="connection-status">Connecting...</span>
+        </div>
+    </div>
+
+    <!-- Modal Dialog -->
+    <div id="url-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="close-modal">&times;</span>
+            <h3>Meeting Details</h3>
+            <p>Share this link to invite others to the session:</p>
+            <div class="url-box">
+                <input type="text" id="meeting-url-input" readonly>
+                <button id="copy-url-btn">Copy</button>
+            </div>
+        </div>
     </div>
 
     <div class="chat-container" id="chat-container">
@@ -279,31 +433,169 @@
             const chatContainer = document.getElementById('chat-container');
             const sendBtn = document.getElementById('send-btn');
 
+            // Modal Elements
+            const meetingUrlBtn = document.getElementById('meeting-url-btn');
+            const urlModal = document.getElementById('url-modal');
+            const closeModal = document.getElementById('close-modal');
+            const meetingUrlInput = document.getElementById('meeting-url-input');
+            const copyUrlBtn = document.getElementById('copy-url-btn');
+
             // API Base URL (change this to your tunnel URL when deploying)
-            const API_BASE_URL = 'https://hormone-subsidiaries-slip-teams.trycloudflare.com';
+            const API_BASE_URL = 'https://sciences-breeds-shareware-infrastructure.trycloudflare.com';
 
-            // AI Endpoint
+            const TOKEN_ENDPOINT = `${API_BASE_URL}/ai/get-temp-ID`;
             const AI_ENDPOINT = `${API_BASE_URL}/ai/test-agent`;
+            const SSE_ENDPOINT = `${API_BASE_URL}/ai/listen-participant`;
 
+            let meetClient = null;
+            let authToken = null;
+            let sseSource = null;
+            let meetingUrl = 'unknown';
+
+            // ── Step 1: Initialize the Meet SDK ──────────────────────────────
             try {
                 if (window.eventrioChat && window.eventrioChat.initializeMainStage) {
-                    await window.eventrioChat.initializeMainStage();
+                    meetClient = await window.eventrioChat.initializeMainStage();
                 }
                 console.log("Main stage bound successfully.");
-                statusEl.textContent = "Connected";
-                statusEl.classList.remove('error');
+                if (meetClient) {
+                    meetingUrlBtn.style.display = 'inline-flex';
+                    // Pre-fetch meeting URL once so we have it ready
+                    try {
+                        const meetingInfo = await meetClient.getMeetingInfo();
+                        const meetingCode = meetingInfo.meetingCode;
+                        meetingUrl = `https://meet.google.com/${meetingCode}`;
+                        console.log("Meeting URL cached:", meetingUrl);
+                    } catch (e) {
+                        console.warn("Could not pre-fetch meeting info:", e);
+                    }
+                }
             } catch (error) {
                 console.error("Failed to initialize main stage:", error);
-                statusEl.textContent = "Connection Failed";
+                statusEl.textContent = "SDK Failed";
                 statusEl.classList.add('error');
             }
 
+            // ── Step 2: Obtain a temp JWT token ──────────────────────────────
+            async function getAuthToken() {
+                try {
+                    const res = await fetch(TOKEN_ENDPOINT, { method: 'GET' });
+                    if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`);
+                    const data = await res.json();
+                    authToken = data.token;
+                    console.log("Auth token obtained.");
+                    return authToken;
+                } catch (e) {
+                    console.error("Failed to get auth token:", e);
+                    statusEl.textContent = "Auth Failed";
+                    statusEl.classList.add('error');
+                    return null;
+                }
+            }
+
+            // ── Step 3: Open SSE subscription BEFORE asking any question ─────
+            function openSSEStream(token, currentMeetingUrl) {
+                if (sseSource) {
+                    sseSource.close();
+                }
+                const sseUrl = `${SSE_ENDPOINT}?token=${encodeURIComponent(token)}&meetingURL=${encodeURIComponent(currentMeetingUrl)}`;
+                sseSource = new EventSource(sseUrl);
+
+                sseSource.onopen = () => {
+                    console.log("[SSE] Connection opened.");
+                    statusEl.textContent = "Connected";
+                    statusEl.classList.remove('error');
+                };
+
+                sseSource.onmessage = (event) => {
+                    try {
+                        const payload = JSON.parse(event.data);
+                        console.log("[SSE] Message received:", payload);
+                        removeLoading();
+                        if (payload.res_text) {
+                            addMessage(payload.res_text, 'bot');
+                        } else if (payload.error) {
+                            addMessage(`Error: ${payload.res_text || 'Unknown error'}`, 'bot');
+                        }
+                        // Re-enable input after we receive the response
+                        chatInput.disabled = false;
+                        sendBtn.disabled = false;
+                        chatInput.focus();
+                    } catch (e) {
+                        console.error("[SSE] Parse error:", e);
+                    }
+                };
+
+                sseSource.onerror = (err) => {
+                    console.error("[SSE] Error:", err);
+                    statusEl.textContent = "Stream Error";
+                    statusEl.classList.add('error');
+                };
+            }
+
+            // ── Init: Get token and open SSE ──────────────────────────────────
+            statusEl.textContent = "Connecting...";
+            const token = await getAuthToken();
+            if (token && meetingUrl !== 'unknown') {
+                openSSEStream(token, meetingUrl);
+            } else if (token) {
+                // SSE will be opened after meetingUrl is resolved on first submit
+                statusEl.textContent = "Ready";
+                statusEl.classList.remove('error');
+            }
+
+            // ── Modal Event Listeners ─────────────────────────────────────────
+            if (meetingUrlBtn) {
+                meetingUrlBtn.addEventListener('click', async () => {
+                    if (meetClient) {
+                        try {
+                            const meetingInfo = await meetClient.getMeetingInfo();
+                            const meetingCode = meetingInfo.meetingCode;
+                            const url = `https://meet.google.com/${meetingCode}`;
+                            meetingUrlInput.value = url;
+                            urlModal.classList.add('show');
+                        } catch (error) {
+                            console.error("Failed to get meeting info:", error);
+                            alert("Could not retrieve meeting info.");
+                        }
+                    }
+                });
+            }
+
+            if (closeModal) {
+                closeModal.addEventListener('click', () => {
+                    urlModal.classList.remove('show');
+                });
+            }
+
+            window.addEventListener('click', (e) => {
+                if (e.target === urlModal) {
+                    urlModal.classList.remove('show');
+                }
+            });
+
+            if (copyUrlBtn) {
+                copyUrlBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(meetingUrlInput.value);
+                        copyUrlBtn.textContent = "Copied!";
+                        copyUrlBtn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+                        setTimeout(() => {
+                            copyUrlBtn.textContent = "Copy";
+                            copyUrlBtn.style.background = "";
+                        }, 2000);
+                    } catch (err) {
+                        console.error("Failed to copy URL:", err);
+                    }
+                });
+            }
+
+            // ── UI Helpers ────────────────────────────────────────────────────
             function addMessage(text, sender) {
                 const msgEl = document.createElement('div');
                 msgEl.classList.add('message', sender);
 
                 if (sender === 'bot') {
-                    // Simple text formatting
                     const paragraphs = text.split('\n\n').filter(p => p.trim() !== '');
                     paragraphs.forEach(pText => {
                         const p = document.createElement('p');
@@ -334,37 +626,53 @@
 
             function removeLoading() {
                 const loadingEl = document.getElementById('loading-indicator');
-                if (loadingEl) {
-                    loadingEl.remove();
-                }
+                if (loadingEl) loadingEl.remove();
             }
 
+            // ── Step 4: Submit question ───────────────────────────────────────
             chatForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+
                 const query = chatInput.value.trim();
                 if (!query) return;
 
+                // Ensure we have a token
+                if (!authToken) {
+                    addMessage("Authentication not ready. Please wait a moment.", 'bot');
+                    return;
+                }
+
+                // Refresh meeting URL if needed
+                if (meetClient && meetingUrl === 'unknown') {
+                    try {
+                        const meetingInfo = await meetClient.getMeetingInfo();
+                        meetingUrl = `https://meet.google.com/${meetingInfo.meetingCode}`;
+                        // Now open SSE since we finally have the URL
+                        openSSEStream(authToken, meetingUrl);
+                    } catch (error) {
+                        console.error("Failed to fetch meeting info:", error);
+                    }
+                }
+
                 addMessage(query, 'user');
                 chatInput.value = '';
-
                 chatInput.disabled = true;
                 sendBtn.disabled = true;
-
                 showLoading();
 
                 try {
+                    // POST the question — backend accepts and returns a job_id immediately
                     const response = await fetch(AI_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${authToken}`
                         },
                         body: JSON.stringify({
                             query: query,
-                            eventID: '69f40867eb4a9c318f5a9550'
+                            meetingURL: meetingUrl
                         })
                     });
-
-                    removeLoading();
 
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -373,17 +681,20 @@
                     const data = await response.json();
 
                     if (data.error) {
+                        removeLoading();
                         addMessage(`Error: ${data.error}`, 'bot');
-                    } else if (data.response) {
-                        addMessage(data.response, 'bot');
+                        chatInput.disabled = false;
+                        sendBtn.disabled = false;
+                        chatInput.focus();
                     } else {
-                        addMessage("Received an empty response.", 'bot');
+                        // Job accepted — response will arrive via SSE stream
+                        console.log(`[Chat] Job accepted: ${data.job_id}. Waiting for SSE response...`);
+                        // Loading stays visible until SSE message arrives
                     }
                 } catch (error) {
                     console.error('Chat error:', error);
                     removeLoading();
                     addMessage("Sorry, I encountered an error communicating with the server.", 'bot');
-                } finally {
                     chatInput.disabled = false;
                     sendBtn.disabled = false;
                     chatInput.focus();

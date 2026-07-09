@@ -12,3 +12,4 @@ openai
 celery
 sentence-transformers
 pymongo
+redis

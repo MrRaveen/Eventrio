@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from . import agent_pb2 as app_dot_proto_dot_agent__pb2
+from . import agent_pb2 as agent__pb2
 
 GRPC_GENERATED_VERSION = '1.81.1'
 GRPC_VERSION = grpc.__version__
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + ' but the generated code in app/proto/agent_pb2_grpc.py depends on'
+        + ' but the generated code in agent_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -37,8 +37,8 @@ class AgentServiceStub:
         """
         self.RunAgent = channel.unary_unary(
                 '/agent.AgentService/RunAgent',
-                request_serializer=app_dot_proto_dot_agent__pb2.AgentRequest.SerializeToString,
-                response_deserializer=app_dot_proto_dot_agent__pb2.AgentResponse.FromString,
+                request_serializer=agent__pb2.AgentRequest.SerializeToString,
+                response_deserializer=agent__pb2.AgentResponse.FromString,
                 _registered_method=True)
 
 
@@ -58,8 +58,8 @@ def add_AgentServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'RunAgent': grpc.unary_unary_rpc_method_handler(
                     servicer.RunAgent,
-                    request_deserializer=app_dot_proto_dot_agent__pb2.AgentRequest.FromString,
-                    response_serializer=app_dot_proto_dot_agent__pb2.AgentResponse.SerializeToString,
+                    request_deserializer=agent__pb2.AgentRequest.FromString,
+                    response_serializer=agent__pb2.AgentResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -88,8 +88,8 @@ class AgentService:
             request,
             target,
             '/agent.AgentService/RunAgent',
-            app_dot_proto_dot_agent__pb2.AgentRequest.SerializeToString,
-            app_dot_proto_dot_agent__pb2.AgentResponse.FromString,
+            agent__pb2.AgentRequest.SerializeToString,
+            agent__pb2.AgentResponse.FromString,
             options,
             channel_credentials,
             insecure,

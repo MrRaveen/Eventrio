@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventrio AI Chat</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            height: 100vh;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #ffffff;
+            padding: 16px 24px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background-color: #ecfdf5;
+            color: #059669;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+        }
+
+        .status.error {
+            background-color: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status.error::before {
+            background-color: #ef4444;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background: #ffffff;
+            color: #1e293b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-bottom-left-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .message.loading {
+            align-self: flex-start;
+            background: #ffffff;
+            color: #64748b;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border-bottom-left-radius: 4px;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            padding: 16px 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #94a3b8;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(0.8);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .input-area {
+            padding: 20px 24px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        .input-container {
+            display: flex;
+            gap: 12px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 16px 24px;
+            border: 1px solid #cbd5e1;
+            border-radius: 28px;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+            background: #f8fafc;
+        }
+
+        input[type="text"]:focus {
+            border-color: #3b82f6;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        button.send-btn {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }
+
+        button.send-btn:hover:not(:disabled) {
+            transform: scale(1.05) translateY(-2px);
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+        }
+
+        button.send-btn:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        button.send-btn:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        button.send-btn svg {
+            width: 22px;
+            height: 22px;
+            fill: currentColor;
+            margin-left: 2px;
+        }
+
+        .message.bot p {
+            margin: 0 0 10px 0;
+        }
+
+        .message.bot p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Typing indicator spacing */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Eventrio AI Assistant</h1>
+        <span class="status" id="connection-status">Connecting...</span>
+    </div>
+
+    <div class="chat-container" id="chat-container">
+        <div class="message bot" style="animation-delay: 0.1s;">
+            <p>Hello! I'm your Eventrio AI Assistant. How can I help you manage your event today?</p>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <form class="input-container" id="chat-form">
+            <input type="text" id="chat-input" placeholder="Ask about events, attendees, or schedules..."
+                autocomplete="off">
+            <button type="submit" class="send-btn" id="send-btn">
+                <svg viewBox="0 0 24 24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <script src="bundle.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const statusEl = document.getElementById('connection-status');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const chatContainer = document.getElementById('chat-container');
+            const sendBtn = document.getElementById('send-btn');
+
+            // API Base URL (change this to your tunnel URL when deploying)
+            const API_BASE_URL = 'https://hormone-subsidiaries-slip-teams.trycloudflare.com';
+
+            // AI Endpoint
+            const AI_ENDPOINT = `${API_BASE_URL}/ai/test-agent`;
+
+            try {
+                if (window.eventrioChat && window.eventrioChat.initializeMainStage) {
+                    await window.eventrioChat.initializeMainStage();
+                }
+                console.log("Main stage bound successfully.");
+                statusEl.textContent = "Connected";
+                statusEl.classList.remove('error');
+            } catch (error) {
+                console.error("Failed to initialize main stage:", error);
+                statusEl.textContent = "Connection Failed";
+                statusEl.classList.add('error');
+            }
+
+            function addMessage(text, sender) {
+                const msgEl = document.createElement('div');
+                msgEl.classList.add('message', sender);
+
+                if (sender === 'bot') {
+                    // Simple text formatting
+                    const paragraphs = text.split('\n\n').filter(p => p.trim() !== '');
+                    paragraphs.forEach(pText => {
+                        const p = document.createElement('p');
+                        p.textContent = pText;
+                        msgEl.appendChild(p);
+                    });
+                    if (paragraphs.length === 0) {
+                        msgEl.textContent = text;
+                    }
+                } else {
+                    msgEl.textContent = text;
+                }
+
+                chatContainer.appendChild(msgEl);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                return msgEl;
+            }
+
+            function showLoading() {
+                const loadingEl = document.createElement('div');
+                loadingEl.classList.add('message', 'loading');
+                loadingEl.id = 'loading-indicator';
+                loadingEl.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+                chatContainer.appendChild(loadingEl);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                return loadingEl;
+            }
+
+            function removeLoading() {
+                const loadingEl = document.getElementById('loading-indicator');
+                if (loadingEl) {
+                    loadingEl.remove();
+                }
+            }
+
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                // Retrieve the client instance (side panel or main stage)
+                const meetClient = await window.eventrioChat.initializeSidePanel();
+
+                // Fetch the meeting information
+                const meetingInfo = await meetClient.getMeetingInfo();
+
+                // The meetingCode provides the 10-character string (e.g., abc-defg-hij)
+                const meetingUrl = `https://meet.google.com/${meetingInfo.meetingCode}`;
+
+                console.log("Meeting URL:", meetingUrl);
+
+                // const query = chatInput.value.trim();
+                // if (!query) return;
+
+                // addMessage(query, 'user');
+                // chatInput.value = '';
+
+                // chatInput.disabled = true;
+                // sendBtn.disabled = true;
+
+                // showLoading();
+
+                // try {
+                //     const response = await fetch(AI_ENDPOINT, {
+                //         method: 'POST',
+                //         headers: {
+                //             'Content-Type': 'application/json'
+                //         },
+                //         body: JSON.stringify({
+                //             query: query,
+                //             eventID: '69f40867eb4a9c318f5a9550'
+                //         })
+                //     });
+
+                //     removeLoading();
+
+                //     if (!response.ok) {
+                //         throw new Error(`HTTP error! status: ${response.status}`);
+                //     }
+
+                //     const data = await response.json();
+
+                //     if (data.error) {
+                //         addMessage(`Error: ${data.error}`, 'bot');
+                //     } else if (data.response) {
+                //         addMessage(data.response, 'bot');
+                //     } else {
+                //         addMessage("Received an empty response.", 'bot');
+                //     }
+                // } catch (error) {
+                //     console.error('Chat error:', error);
+                //     removeLoading();
+                //     addMessage("Sorry, I encountered an error communicating with the server.", 'bot');
+                // } finally {
+                //     chatInput.disabled = false;
+                //     sendBtn.disabled = false;
+                //     chatInput.focus();
+                // }
+            });
+        });
+    </script>
+</body>
+
+</html>

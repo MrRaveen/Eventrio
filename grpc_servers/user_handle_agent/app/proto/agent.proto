@@ -11,12 +11,14 @@ service AgentService {
 // The request message (what client sends)
 message AgentRequest {
   string eventID = 1;
-  string query = 2;
+  string tempUserID = 2;
+  string query = 3;
 }
 
 // The response message (what server returns)
 message AgentResponse {
-  string response = 1;
-  bool is_complete = 2;
-  optional string error = 3;
+  string eventID = 1;
+  string job_id = 2;
+  bool is_complete = 3;
+  optional string error = 4;
 }
