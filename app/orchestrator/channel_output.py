@@ -1,18 +1,14 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, ConfigDict, Field
-from app.models.enum.IndustryEnum import IndustryEnum
-from app.models.enum.RoleEnum import RoleEnum
-from datetime import datetime
-from enum import Enum
 from pydantic import BaseModel, Field
-
 from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
 
 class notification_payload(BaseModel):
-    userID:str
-    projectID:str
-    workflowID:str
+    isQuestions: bool
+    allQuestions: Optional[List[str]] = None
+    userID: Optional[str] = None
+    projectID: Optional[str] = None
+    workflowID: Optional[str] = None
 
 class EventPayload(BaseModel):
     project_id: str
@@ -30,4 +26,4 @@ class SagaStepResponse(BaseModel):
     payload: EventPayload
 
 class channel_output(BaseModel):
-    return_data: Dict[str,Any]
+    return_data: Dict[str, Any]

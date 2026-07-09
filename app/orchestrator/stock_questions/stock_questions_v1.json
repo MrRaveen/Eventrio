@@ -1,0 +1,14 @@
+{
+    "allQuestions": [
+        "What is the primary objective or main takeaway the audience should gain from this online event?",
+        "Who is the target audience, and what is their expected level of prior knowledge or experience?",
+        "Who are the key speakers or hosts, and what are their brief professional backgrounds?",
+        "Are there any prerequisites, specific software, or preliminary materials attendees must review before joining?",
+        "How is the agenda structured regarding session lengths, breaks, and interactive segments?",
+        "What is the designated format and policy for audience participation, such as Q&A sessions or live polling?",
+        "Will the event be recorded, and what is the timeline and method for distributing the recording and presentation materials?",
+        "What are the specific technical expectations for attendees, such as mandatory camera usage or microphone muting rules?",
+        "What is the process for attendees to receive technical support or resolve ticketing issues if they face login difficulties?",
+        "Are there any specific codes of conduct, community guidelines, or behavioral expectations attendees must strictly follow during the stream?"
+    ]
+}

@@ -3,26 +3,37 @@
         {
             "name": "ai_tasks",
             "function_name": "execute_workflow",
+            "userInput": false,
+            "fallback_functions": []
+        },
+        {
+            "name": "create_event_context",
+            "function_name": "create_context",
+            "userInput": true,
             "fallback_functions": []
         },
         {
             "name": "create_google_doc",
             "function_name": "create_google_doc_for_event",
+            "userInput": false,
             "fallback_functions": []
         },
         {
             "name": "google_meet",
             "function_name": "automate_google_meet",
+            "userInput": false,
             "fallback_functions": []
         },
         {
             "name": "fb_page",
             "function_name": "post_image_to_facebook_page",
+            "userInput": false,
             "fallback_functions": []
         },
         {
             "name": "google_calendar",
             "function_name": "schedule_real_google_calendar",
+            "userInput": false,
             "fallback_functions": []
         }
     ]

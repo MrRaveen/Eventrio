@@ -10,6 +10,7 @@ from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
 
 from app.ai_workers.workflow.full_workflow import execute_workflow
 from app.orchestrator.services.document_service import document_service
+from app.orchestrator.services.create_context import create_context
 from app.orchestrator.services.meet_service import meet_service
 from app.orchestrator.services.social_service import social_service
 from app.orchestrator.services.calendar_service import calendar_service
@@ -18,6 +19,7 @@ from datetime import datetime
 from app.config import getRedisClient
 from app.orchestrator.saga.redis_save import (
     execute_workflow_redis,
+    create_context_redis,
     create_google_doc_for_event_task_redis,
     automate_google_meet_task_redis,
     post_image_to_facebook_page_task_redis,
@@ -27,6 +29,7 @@ from app.orchestrator.saga.redis_save import (
 from app.orchestrator.saga.payload_creator import (
     create_google_doc_for_event_task_payload,
     automate_google_meet_task_payload,
+    create_context_payload,
     post_image_to_facebook_page_task_payload,
     schedule_real_google_calendar_task_payload
 )
@@ -36,6 +39,7 @@ from app.orchestrator.channel_output import notification_payload
 
 TASK_MAPPING = {
     "execute_workflow": execute_workflow,
+    "create_context":create_context,
     "create_google_doc_for_event": document_service.create_google_doc_for_event_task,
     "automate_google_meet": meet_service.automate_google_meet_task,
     "post_image_to_facebook_page": social_service.post_image_to_facebook_page_task,
@@ -43,6 +47,7 @@ TASK_MAPPING = {
 }
 REDIS_MAPPING = {
     "execute_workflow": execute_workflow_redis,
+    "create_context":create_context_redis,
     "create_google_doc_for_event": create_google_doc_for_event_task_redis,
     "automate_google_meet": automate_google_meet_task_redis,
     "post_image_to_facebook_page": post_image_to_facebook_page_task_redis,
@@ -50,6 +55,7 @@ REDIS_MAPPING = {
 }
 PAYLOADS = {
     "create_google_doc_for_event": create_google_doc_for_event_task_payload,
+    "create_context" : create_context_payload,
     "automate_google_meet": automate_google_meet_task_payload,
     "post_image_to_facebook_page": post_image_to_facebook_page_task_payload,
     "schedule_real_google_calendar": schedule_real_google_calendar_task_payload
@@ -67,6 +73,7 @@ class engine:
                 status=SAGAWorkflowStatusEnum.PROCESSING
             )
             newWorkflow.save()
+            #FB page checking part (page ID might be there)
             if page_id:
                 redis_client = getRedisClient()
                 redis_key = f"saga_cache:{userID}:{str(newWorkflow.id)}"
@@ -103,9 +110,10 @@ def background_orches_worker():
                     continue
 
                 # update redis
-                function_redis = REDIS_MAPPING.get(current_function_name)
-                if function_redis:
-                    function_redis(payload, redis_client)
+                if current_function_name != "create_context":
+                    function_redis = REDIS_MAPPING.get(current_function_name)
+                    if function_redis:
+                        function_redis(payload, redis_client)
 
                 # extract inner_payload — all services now include user_id in payload
                 inner_payload = payload.get('payload', {})
@@ -129,37 +137,103 @@ def background_orches_worker():
 
                 # find the next step
                 rules_path = os.path.join(os.path.dirname(__file__), '..', 'step_rules', 'rules_v1.json')
+                questions_path = os.path.join(os.path.dirname(__file__), '..', 'stock_questions', 'stock_questions_v1.json')
                 with open(rules_path, 'r') as f:
                     rules = json.load(f)
+                with open(questions_path, 'r') as q:
+                    allQuestionsArr = json.load(q)    
                     
                 next_function_name = None
+                isUserInput: bool = False
                 steps = rules.get('main_steps', [])
                 for i, step in enumerate(steps):
                     if step.get('function_name') == current_function_name:
                         if i + 1 < len(steps):
                             next_function_name = steps[i+1].get('function_name')
+                            isUserInput = steps[i+1].get('userInput')
                         break
 
                 if next_function_name:
-                    selectedStep = TASK_MAPPING.get(next_function_name)
-                    if selectedStep is not None:
-                        selected_payload_fun = PAYLOADS.get(next_function_name)
-                        if not user_id or not workflow_id:
-                            print(f"Missing user_id or workflow_id — cannot build payload for {next_function_name}")
-                            continue
-                        generated_payload = selected_payload_fun(user_id, workflow_id)
-                        
-                        if hasattr(generated_payload, 'model_dump'):
-                            data_for_task = generated_payload.model_dump()
-                        elif hasattr(generated_payload, 'dict'):
-                            data_for_task = generated_payload.dict()
-                        else:
-                            data_for_task = generated_payload
-                            
-                        print(f"Calling Celery task: {next_function_name} with workflow {workflow_id}")
-                        selectedStep.delay(data_for_task)
+                    #ask for live questions and wait to get an answer from the user
+                    #TODO: Timeout this part
+                    if isUserInput:
+                        print("Asking questions from the user")
+                        redis_key = f"saga_cache:{user_id}:{workflow_id}"
+                        cached_data = redis_client.get(redis_key)
+                        parsed_data = json.loads(cached_data) if cached_data else {}
+                        projectID = parsed_data.get("projectID")
+                        notifUser = notification_payload(
+                            isQuestions=True,
+                            allQuestions = allQuestionsArr.get("allQuestions",[]),
+                            projectID=projectID or "",
+                            workflowID=workflow_id or ""
+                        )
+                        converted_data = json.dumps(notifUser.model_dump(), default=str)
+                        redis_client.publish(notificationChannel, converted_data)
+                        #wait until user send the respond through the same channel
+                        for message in pubsub.listen():
+                            if message['type'] != 'message':
+                                continue
+                            raw = message['data']
+                            if isinstance(raw, bytes):
+                                raw = raw.decode('utf-8')
+                            payload = json.loads(raw)
+                            #data validation recieved from user (QA and paragraphs)
+                            if payload.get('projectID') == projectID and payload.get('workflowID') == workflow_id:
+                                if 'allQuestionsAns' in payload and 'paragraphs' in payload:
+                                    selectedStep = TASK_MAPPING.get(next_function_name)
+                                    if selectedStep is not None:
+                                        selected_payload_fun = PAYLOADS.get(next_function_name)
+                                        if not user_id or not workflow_id:
+                                            print(f"Missing user_id or workflow_id — cannot build payload for {next_function_name}")
+                                            break
+                                        #payload like created from other saga services but this is from user response
+                                        redisSaveDataReqParam = {
+                                            "payload":{
+                                                "user_id":user_id,
+                                                "workflowID":workflow_id,
+                                                "allAnswers":payload.get('allQuestionsAns',[]),
+                                                "allParagraphs":payload.get('paragraphs',[])
+                                            }
+                                        }
+                                        function_redis = REDIS_MAPPING.get(next_function_name)
+                                        if function_redis:
+                                            function_redis(redisSaveDataReqParam, redis_client) 
+                                        #payload creation for the saga service     
+                                        generated_payload = selected_payload_fun(user_id, workflow_id)
+                                        if hasattr(generated_payload, 'model_dump'):
+                                            data_for_task = generated_payload.model_dump()
+                                        elif hasattr(generated_payload, 'dict'):
+                                            data_for_task = generated_payload.dict()
+                                        else:
+                                            data_for_task = generated_payload  
+                                            
+                                        print(f"Calling Celery task: {next_function_name} with workflow {workflow_id}")
+                                        #run the step with the custom made payload
+                                        selectedStep.delay(data_for_task)
+                                    else:
+                                        print(f"No task found in TASK_MAPPING for {next_function_name}")
+                                break
                     else:
-                        print(f"No task found in TASK_MAPPING for {next_function_name}")
+                        selectedStep = TASK_MAPPING.get(next_function_name)
+                        if selectedStep is not None:
+                            selected_payload_fun = PAYLOADS.get(next_function_name)
+                            if not user_id or not workflow_id:
+                                print(f"Missing user_id or workflow_id — cannot build payload for {next_function_name}")
+                                continue
+                            generated_payload = selected_payload_fun(user_id, workflow_id)
+                            
+                            if hasattr(generated_payload, 'model_dump'):
+                                data_for_task = generated_payload.model_dump()
+                            elif hasattr(generated_payload, 'dict'):
+                                data_for_task = generated_payload.dict()
+                            else:
+                                data_for_task = generated_payload
+                                
+                            print(f"Calling Celery task: {next_function_name} with workflow {workflow_id}")
+                            selectedStep.delay(data_for_task)
+                        else:
+                            print(f"No task found in TASK_MAPPING for {next_function_name}")
                 else:
                     print(f"Reached the end of the workflow for workflowID: {workflow_id}")
                     try:
@@ -168,6 +242,7 @@ def background_orches_worker():
                         parsed_data = json.loads(cached_data) if cached_data else {}
                         projectID = parsed_data.get("projectID")
                         notif = notification_payload(
+                            isQuestions=False,
                             userID=user_id or "",
                             projectID=projectID or "",
                             workflowID=workflow_id or ""

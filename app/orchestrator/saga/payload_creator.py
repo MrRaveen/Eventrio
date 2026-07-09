@@ -77,4 +77,22 @@ def schedule_real_google_calendar_task_payload(user_id: str, workflow_id: str):
     
     return payload_model   
  
+def create_context_payload(user_id: str, workflow_id: str):
+    redis_key = f"saga_cache:{user_id}:{workflow_id}"
+    redis_client = getRedisClient()
+    cached_data = redis_client.get(redis_key)
+    if not cached_data:
+        raise ValueError(f"No cache data found in Redis for key: {redis_key}")
+    parsed_data = json.loads(cached_data)
+    from app.orchestrator.services.create_context import context_service
+    payload_model = context_service.req_data(
+        owner_id=parsed_data.get("userID"),
+        event_id=parsed_data.get("projectID"),
+        allQuestionsAnswers = parsed_data.get("allQuestionsAnswers"),
+        allParagraphs = parsed_data.get("allParagraphs"),
+        workflow_id=workflow_id
+    )
+    return payload_model  
+
+
 
