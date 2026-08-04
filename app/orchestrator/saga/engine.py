@@ -1,45 +1,43 @@
 import json
 import os
-from app import scheduler
+from datetime import datetime
 from typing import Optional
-from app.models.saga_workflow import SAGA_workflow
+
+from app import scheduler
+from app.ai_workers.workflow.full_workflow import execute_workflow
+from app.config import getRedisClient
+from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
+from app.models.enum.SAGAStepTypeEnum import SAGAStepTypeEnum
 from app.models.enum.SAGAWorkflowStatusEnum import SAGAWorkflowStatusEnum
 from app.models.saga_steps import SAGA_steps
-from app.models.enum.SAGAStepTypeEnum import SAGAStepTypeEnum
-from app.models.enum.SAGAStepStatusEnum import SAGAStepStatusEnum
-
-from app.ai_workers.workflow.full_workflow import execute_workflow
-from app.orchestrator.services.document_service import document_service
-from app.orchestrator.services.create_context import create_context
-from app.orchestrator.services.meet_service import meet_service
-from app.orchestrator.services.social_service import social_service
-from app.orchestrator.services.calendar_service import calendar_service
+from app.models.saga_workflow import SAGA_workflow
+from app.orchestrator.channel_output import notification_payload
 from app.orchestrator.redis_orchestrator_queue import listen_to_response_channel
-from datetime import datetime
-from app.config import getRedisClient
-from app.orchestrator.saga.redis_save import (
-    execute_workflow_redis,
-    create_context_redis,
-    create_google_doc_for_event_task_redis,
-    automate_google_meet_task_redis,
-    post_image_to_facebook_page_task_redis,
-    schedule_real_google_calendar_task_redis
-)
-
 from app.orchestrator.saga.payload_creator import (
-    create_google_doc_for_event_task_payload,
     automate_google_meet_task_payload,
     create_context_payload,
+    create_google_doc_for_event_task_payload,
     post_image_to_facebook_page_task_payload,
-    schedule_real_google_calendar_task_payload
+    schedule_real_google_calendar_task_payload,
 )
+from app.orchestrator.saga.redis_save import (
+    automate_google_meet_task_redis,
+    create_context_redis,
+    create_google_doc_for_event_task_redis,
+    execute_workflow_redis,
+    post_image_to_facebook_page_task_redis,
+    schedule_real_google_calendar_task_redis,
+)
+from app.orchestrator.services.calendar_service import calendar_service
+from app.orchestrator.services.create_context import context_service
+from app.orchestrator.services.document_service import document_service
+from app.orchestrator.services.meet_service import meet_service
+from app.orchestrator.services.social_service import social_service
 from errors import APIError
-from app.orchestrator.channel_output import notification_payload
-
 
 TASK_MAPPING = {
     "execute_workflow": execute_workflow,
-    "create_context":create_context,
+    "create_context": context_service.create_context,
     "create_google_doc_for_event": document_service.create_google_doc_for_event_task,
     "automate_google_meet": meet_service.automate_google_meet_task,
     "post_image_to_facebook_page": social_service.post_image_to_facebook_page_task,
@@ -84,7 +82,7 @@ class engine:
                 redis_client.set(redis_key, json_payload)
             execute_workflow.delay(userID, prompt, org_id, str(newWorkflow.id))
         except Exception as e:
-            print(f"Error in start_engine: {e}") 
+            print(f"Error in start_engine: {e}")
 
 # @scheduler.task('interval', id='orch_background', seconds=30, misfire_grace_time=900)
 def background_orches_worker():
@@ -141,8 +139,8 @@ def background_orches_worker():
                 with open(rules_path, 'r') as f:
                     rules = json.load(f)
                 with open(questions_path, 'r') as q:
-                    allQuestionsArr = json.load(q)    
-                    
+                    allQuestionsArr = json.load(q)
+
                 next_function_name = None
                 isUserInput: bool = False
                 steps = rules.get('main_steps', [])
@@ -198,16 +196,16 @@ def background_orches_worker():
                                         }
                                         function_redis = REDIS_MAPPING.get(next_function_name)
                                         if function_redis:
-                                            function_redis(redisSaveDataReqParam, redis_client) 
-                                        #payload creation for the saga service     
+                                            function_redis(redisSaveDataReqParam, redis_client)
+                                        #payload creation for the saga service
                                         generated_payload = selected_payload_fun(user_id, workflow_id)
                                         if hasattr(generated_payload, 'model_dump'):
                                             data_for_task = generated_payload.model_dump()
                                         elif hasattr(generated_payload, 'dict'):
                                             data_for_task = generated_payload.dict()
                                         else:
-                                            data_for_task = generated_payload  
-                                            
+                                            data_for_task = generated_payload
+
                                         print(f"Calling Celery task: {next_function_name} with workflow {workflow_id}")
                                         #run the step with the custom made payload
                                         selectedStep.delay(data_for_task)
@@ -222,14 +220,14 @@ def background_orches_worker():
                                 print(f"Missing user_id or workflow_id — cannot build payload for {next_function_name}")
                                 continue
                             generated_payload = selected_payload_fun(user_id, workflow_id)
-                            
+
                             if hasattr(generated_payload, 'model_dump'):
                                 data_for_task = generated_payload.model_dump()
                             elif hasattr(generated_payload, 'dict'):
                                 data_for_task = generated_payload.dict()
                             else:
                                 data_for_task = generated_payload
-                                
+
                             print(f"Calling Celery task: {next_function_name} with workflow {workflow_id}")
                             selectedStep.delay(data_for_task)
                         else:

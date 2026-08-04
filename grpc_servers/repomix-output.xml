@@ -1,0 +1,831 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+user_handle_agent/
+  app/
+    agents/
+      core/
+        llmService.py
+        mainAgent.py
+      plugins/
+        perform_tasks_pluggin.py
+        RAG_pluggin.py
+      __init__.py
+    proto/
+      __init__.py
+      agent_pb2_grpc.py
+      agent_pb2.py
+      agent.proto
+    routes/
+      mainAgentAccess.py
+    tasks/
+      __init__.py
+      user_questions_task.py
+    utils/
+      vector_converter.py
+  debug_rag.py
+  fix_embeddings.py
+  README.md
+  requirements.txt
+  run.py
+  test_main_agent.py
+  test_sk.py
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="user_handle_agent/app/agents/core/llmService.py">
+import os
+from openai import AsyncOpenAI
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
+import httpx
+
+def llmService() -> OpenAIChatCompletion:
+    api_key = os.getenv("GROQ_API_KEY")
+    base_url = os.getenv("GROQ_BASE")
+    service_id = os.getenv("SERVICE_ID", "groq")
+    model = os.getenv("MODEL", "llama-3.1-8b-instant")
+    
+    if api_key:
+        api_key = api_key.strip("'\"")
+    if base_url:
+        base_url = base_url.strip("'\"")
+    if service_id:
+        service_id = service_id.strip("'\"")
+    if model:
+        model = model.strip("'\"")
+
+    print(f"[LLM] Connecting to: {base_url} | model: {model}", flush=True)
+
+    client = AsyncOpenAI(
+        api_key=api_key,
+        base_url=base_url,
+        timeout=httpx.Timeout(60.0, connect=10.0),
+    )
+    service = OpenAIChatCompletion(
+        service_id=service_id,
+        ai_model_id=model,
+        async_client=client
+    )
+    return service
+</file>
+
+<file path="user_handle_agent/app/agents/core/mainAgent.py">
+import os
+from semantic_kernel import Kernel
+from semantic_kernel.connectors.ai.open_ai import (
+    OpenAIChatCompletion,
+    OpenAIChatPromptExecutionSettings,
+)
+from app.agents.core.llmService import llmService
+from app.agents.plugins.RAG_pluggin import MongoRAGPlugin
+
+AGENT_INSTRUCTIONS = (
+    "You are the official event assistant. Answer participant questions about "
+    "event logistics, schedules, and details using ONLY the provided context. "
+    "If the context does not contain the answer, say the detail is currently unavailable. "
+    "Do not make up information."
+)
+
+
+class MainAgent:
+    def __init__(self):
+        self.llm_service = llmService()
+        self.mongo_uri = os.getenv("MONGO_URI")
+        self.db_name = os.getenv("MONGO_DB_NAME")
+        self.target_collection = os.getenv("EVENT_CONTEXT_COLLECTION", "event_chunks")
+
+    def get_kernel(self) -> Kernel:
+        """Build a plain Kernel with the LLM service — no tools registered."""
+        kernel = Kernel()
+        kernel.add_service(self.llm_service)
+        return kernel
+
+    def retrieve_context(self, event_id: str, query: str) -> str:
+        """
+        Directly call the RAG plugin and return retrieved context as a string.
+        Pre-fetching avoids relying on Groq's llama model to correctly emit
+        OpenAI-style tool calls (it often generates a broken format that
+        causes a 400 from Groq's API).
+        """
+        plugin = MongoRAGPlugin(
+            connection_string=self.mongo_uri,
+            db_name=self.db_name,
+            collection_name=self.target_collection,
+            event_id=event_id,
+        )
+        try:
+            context = plugin.retrieve_context(query=query)
+            return context or ""
+        except Exception as e:
+            print(f"[RAG retrieve_context error]: {e}", flush=True)
+            return ""
+</file>
+
+<file path="user_handle_agent/app/agents/plugins/perform_tasks_pluggin.py">
+
+</file>
+
+<file path="user_handle_agent/app/agents/plugins/RAG_pluggin.py">
+from typing import Annotated
+from pymongo import MongoClient
+from semantic_kernel.functions import kernel_function
+from app.utils.vector_converter import vector_converter
+
+
+class MongoRAGPlugin:
+    def __init__(self, connection_string: str, db_name: str, collection_name: str, event_id: str = None):
+        self.client = MongoClient(connection_string)
+        self.collection = self.client[db_name][collection_name]
+        self.converter = vector_converter()
+        self.event_id = event_id
+
+    @kernel_function(
+        name="RetrieveEnterpriseContext",
+        description="Searches the MongoDB vector database to retrieve context for user queries."
+    )
+    def retrieve_context(self, query: str) -> str:
+        query_vector = self.converter.convertToVector(text = query)
+        
+        vector_search_stage = {
+            "index": "vector_index",
+            "path": "embedding",
+            "queryVector": query_vector,
+            "numCandidates": 100,
+            "limit": 3
+        }
+        if self.event_id:
+            vector_search_stage["filter"] = {"eventID": self.event_id}
+            
+        pipeline = [
+            {
+                "$vectorSearch": vector_search_stage
+            }
+        ]
+        
+        results = list(self.collection.aggregate(pipeline))
+        return "\n".join([doc.get("content", doc.get("text_content", "")) for doc in results])
+</file>
+
+<file path="user_handle_agent/app/agents/__init__.py">
+
+</file>
+
+<file path="user_handle_agent/app/proto/__init__.py">
+# Proto package init
+</file>
+
+<file path="user_handle_agent/app/proto/agent_pb2_grpc.py">
+# Generated by the gRPC Python protocol compiler plugin. DO NOT EDIT!
+"""Client and server classes corresponding to protobuf-defined services."""
+import grpc
+import warnings
+
+from . import agent_pb2 as agent__pb2
+
+GRPC_GENERATED_VERSION = '1.81.1'
+GRPC_VERSION = grpc.__version__
+_version_not_supported = False
+
+try:
+    from grpc._utilities import first_version_is_lower
+    _version_not_supported = first_version_is_lower(GRPC_VERSION, GRPC_GENERATED_VERSION)
+except ImportError:
+    _version_not_supported = True
+
+if _version_not_supported:
+    raise RuntimeError(
+        f'The grpc package installed is at version {GRPC_VERSION},'
+        + ' but the generated code in agent_pb2_grpc.py depends on'
+        + f' grpcio>={GRPC_GENERATED_VERSION}.'
+        + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
+        + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
+    )
+
+
+class AgentServiceStub:
+    """The service definition
+    """
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.RunAgent = channel.unary_unary(
+                '/agent.AgentService/RunAgent',
+                request_serializer=agent__pb2.AgentRequest.SerializeToString,
+                response_deserializer=agent__pb2.AgentResponse.FromString,
+                _registered_method=True)
+
+
+class AgentServiceServicer:
+    """The service definition
+    """
+
+    def RunAgent(self, request, context):
+        """Unary RPC: one request, one response
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_AgentServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'RunAgent': grpc.unary_unary_rpc_method_handler(
+                    servicer.RunAgent,
+                    request_deserializer=agent__pb2.AgentRequest.FromString,
+                    response_serializer=agent__pb2.AgentResponse.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'agent.AgentService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+    server.add_registered_method_handlers('agent.AgentService', rpc_method_handlers)
+
+
+ # This class is part of an EXPERIMENTAL API.
+class AgentService:
+    """The service definition
+    """
+
+    @staticmethod
+    def RunAgent(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/agent.AgentService/RunAgent',
+            agent__pb2.AgentRequest.SerializeToString,
+            agent__pb2.AgentResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+</file>
+
+<file path="user_handle_agent/app/proto/agent_pb2.py">
+# -*- coding: utf-8 -*-
+# Generated by the protocol buffer compiler.  DO NOT EDIT!
+# NO CHECKED-IN PROTOBUF GENCODE
+# source: agent.proto
+# Protobuf Python Version: 6.33.5
+"""Generated protocol buffer code."""
+from google.protobuf import descriptor as _descriptor
+from google.protobuf import descriptor_pool as _descriptor_pool
+from google.protobuf import runtime_version as _runtime_version
+from google.protobuf import symbol_database as _symbol_database
+from google.protobuf.internal import builder as _builder
+_runtime_version.ValidateProtobufRuntimeVersion(
+    _runtime_version.Domain.PUBLIC,
+    6,
+    33,
+    5,
+    '',
+    'agent.proto'
+)
+# @@protoc_insertion_point(imports)
+
+_sym_db = _symbol_database.Default()
+
+
+
+
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0b\x61gent.proto\x12\x05\x61gent\"B\n\x0c\x41gentRequest\x12\x0f\n\x07\x65ventID\x18\x01 \x01(\t\x12\x12\n\ntempUserID\x18\x02 \x01(\t\x12\r\n\x05query\x18\x03 \x01(\t\"c\n\rAgentResponse\x12\x0f\n\x07\x65ventID\x18\x01 \x01(\t\x12\x0e\n\x06job_id\x18\x02 \x01(\t\x12\x13\n\x0bis_complete\x18\x03 \x01(\x08\x12\x12\n\x05\x65rror\x18\x04 \x01(\tH\x00\x88\x01\x01\x42\x08\n\x06_error2E\n\x0c\x41gentService\x12\x35\n\x08RunAgent\x12\x13.agent.AgentRequest\x1a\x14.agent.AgentResponseb\x06proto3')
+
+_globals = globals()
+_builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
+_builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'agent_pb2', _globals)
+if not _descriptor._USE_C_DESCRIPTORS:
+  DESCRIPTOR._loaded_options = None
+  _globals['_AGENTREQUEST']._serialized_start=22
+  _globals['_AGENTREQUEST']._serialized_end=88
+  _globals['_AGENTRESPONSE']._serialized_start=90
+  _globals['_AGENTRESPONSE']._serialized_end=189
+  _globals['_AGENTSERVICE']._serialized_start=191
+  _globals['_AGENTSERVICE']._serialized_end=260
+# @@protoc_insertion_point(module_scope)
+</file>
+
+<file path="user_handle_agent/app/proto/agent.proto">
+syntax = "proto3";
+
+package agent;
+
+// The service definition
+service AgentService {
+  // Unary RPC: one request, one response
+  rpc RunAgent (AgentRequest) returns (AgentResponse);
+}
+
+// The request message (what client sends)
+message AgentRequest {
+  string eventID = 1;
+  string tempUserID = 2;
+  string query = 3;
+}
+
+// The response message (what server returns)
+message AgentResponse {
+  string eventID = 1;
+  string job_id = 2;
+  bool is_complete = 3;
+  optional string error = 4;
+}
+</file>
+
+<file path="user_handle_agent/app/routes/mainAgentAccess.py">
+import uuid
+import asyncio
+import grpc
+import traceback
+from app.proto import agent_pb2_grpc
+from app.proto import agent_pb2
+from app.tasks.user_questions_task import user_questions_task
+
+
+class AgentServicer(agent_pb2_grpc.AgentServiceServicer):
+    """gRPC Servicer: handles RunAgent unary RPC calls."""
+
+    async def RunAgent(self, request, context):
+        """
+        Accept the request immediately, fire the heavy RAG+LLM work as a
+        background asyncio task, and return a job_id to the caller so it
+        can track the result via SSE / Redis pub-sub.
+        """
+        try:
+            job_id = str(uuid.uuid4())
+
+            # Fire background task — does NOT block the gRPC response
+            asyncio.create_task(
+                user_questions_task(
+                    job_id=job_id,
+                    eventID=request.eventID,
+                    query=request.query,
+                    tempUserID=request.tempUserID,
+                )
+            )
+
+            # Return immediately with the job_id so the Flask caller can
+            # tell the frontend which job to watch on the SSE stream.
+            return agent_pb2.AgentResponse(
+                eventID=request.eventID,
+                job_id=job_id,
+                is_complete=False,  # Work is still in progress in the background
+            )
+
+        except Exception as e:
+            full_trace = traceback.format_exc()
+            print(f"[RunAgent ERROR]\n{full_trace}", flush=True)
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(str(e))
+            return agent_pb2.AgentResponse(
+                eventID=request.eventID,
+                job_id="",
+                is_complete=False,
+                error=str(e),
+            )
+
+
+async def serve():
+    """Start the async gRPC server and block until termination."""
+    server = grpc.aio.server()
+    agent_pb2_grpc.add_AgentServiceServicer_to_server(AgentServicer(), server)
+    server.add_insecure_port("[::]:50051")
+    await server.start()
+    print("GRPC Server 1 started", flush=True)
+    await server.wait_for_termination()
+</file>
+
+<file path="user_handle_agent/app/tasks/__init__.py">
+
+</file>
+
+<file path="user_handle_agent/app/tasks/user_questions_task.py">
+import os
+import json
+import traceback
+import redis
+from semantic_kernel.contents import ChatHistory
+from semantic_kernel.connectors.ai.open_ai import (
+    OpenAIChatCompletion,
+    OpenAIChatPromptExecutionSettings,
+)
+from app.agents.core.mainAgent import MainAgent, AGENT_INSTRUCTIONS
+
+
+def _get_redis_client():
+    """Create a standalone Redis client for the gRPC server (separate from Flask app's singleton)."""
+    return redis.Redis(
+        host=os.getenv('REDIS_HOST', 'localhost'),
+        port=int(os.getenv('REDIS_PORT', 6379)),
+        db=0,
+        decode_responses=True
+    )
+
+
+async def user_questions_task(job_id: str, eventID: str, query: str, tempUserID: str):
+    """
+    Standalone async background task to:
+    1. Retrieve RAG context from the database.
+    2. Build and invoke the LLM with the context.
+    3. Publish the result to Redis pub/sub so the subscribed Flask SSE client receives it.
+    """
+    try:
+        redis_client = _get_redis_client()
+        agent_manager = MainAgent()
+
+        # Retrieve RAG context directly (no LLM tool-calling) ──
+        rag_context = agent_manager.retrieve_context(
+            event_id=eventID,
+            query=query,
+        )
+
+        # Build augmented system prompt ──
+        if rag_context:
+            system_msg = (
+                f"{AGENT_INSTRUCTIONS}\n\n"
+                f"--- Retrieved Event Context ---\n{rag_context}\n"
+                f"--- End of Context ---"
+            )
+        else:
+            system_msg = (
+                f"{AGENT_INSTRUCTIONS}\n\n"
+                "(No context was retrieved from the database for this query.)"
+            )
+
+        history = ChatHistory()
+        history.add_system_message(system_msg)
+        history.add_user_message(query)
+
+        # Call LLM — no tools registered, plain completion ──
+        kernel = agent_manager.get_kernel()
+        settings = OpenAIChatPromptExecutionSettings()
+        # The code queries the Kernel for the registered OpenAI service.
+        chat_service: OpenAIChatCompletion = kernel.get_service(
+            type=OpenAIChatCompletion
+        )
+
+        # This is the execution trigger. The OpenAIChatCompletion service takes the standardized, 
+        # framework-agnostic objects (history and settings), 
+        # translates them into the specific JSON payload required by OpenAI's
+        # REST API, makes the asynchronous network call, and parses the response back into a Semantic Kernel object.
+        result = await chat_service.get_chat_message_contents(
+            chat_history=history,
+            settings=settings,
+        )
+
+        response_text = result[-1].content if result else ""
+        channel_name = os.getenv('PARTICIPANT_CHANNEL')   
+
+        payload = {
+            "type":"message",
+            "eventID": eventID,
+            "userID": tempUserID,
+            "job_id": job_id,
+            "query": query,
+            "res_text": response_text,
+        }
+
+        json_payload = json.dumps(payload)
+        subscribers_count = redis_client.publish(channel_name, json_payload)
+        print(f"[user_questions_task] Published response for job={job_id} to {subscribers_count} subscriber(s).", flush=True)
+
+    except Exception as e:
+        full_trace = traceback.format_exc()
+        print(f"[user_questions_task ERROR]\n{full_trace}", flush=True)
+
+        # Attempt to publish an error payload so the SSE client can display it
+        try:
+            redis_client = _get_redis_client()
+            channel_name = os.getenv('PARTICIPANT_CHANNEL', 'participant_events')
+            error_payload = json.dumps({
+                "eventID": eventID,
+                "userID": tempUserID,
+                "job_id": job_id,
+                "query": query,
+                "res_text": f"[Agent Error] {str(e)}",
+                "error": True,
+            })
+            redis_client.publish(channel_name, error_payload)
+        except Exception:
+            pass
+</file>
+
+<file path="user_handle_agent/app/utils/vector_converter.py">
+class vector_converter:
+    def __init__(self):
+        print("Loading SentenceTransformer model (this may take a few minutes on slow drives)...", flush=True)
+        from sentence_transformers import SentenceTransformer
+        self.model = SentenceTransformer('all-MiniLM-L6-v2')
+        print("SentenceTransformer loaded successfully!", flush=True)
+        
+    def convertToVector(self, text: str) -> list:
+        try:
+            if not text:
+                return "text is none in vector converter"    
+            embedding_vector = self.model.encode(text) 
+            return embedding_vector.tolist()
+        except Exception as e:
+            print(f"Error in vector converter: {e}")
+            return []
+</file>
+
+<file path="user_handle_agent/debug_rag.py">
+"""Show all 5 documents and their embedding dimensions."""
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+project_root = Path(__file__).resolve().parent.parent.parent
+load_dotenv(dotenv_path=project_root / ".env")
+
+from pymongo import MongoClient
+
+mongo_uri = os.getenv("MONGO_URI")
+db_name = os.getenv("MONGO_DB_NAME", "").strip("'\"")
+collection_name = os.getenv("EVENT_CONTEXT_COLLECTION", "eventContext").strip("'\"")
+
+client = MongoClient(mongo_uri)
+coll = client[db_name][collection_name]
+
+for i, doc in enumerate(coll.find()):
+    emb = doc.get("embedding", [])
+    content = doc.get("content", "")[:120]
+    print(f"\n--- Doc {i+1} ---")
+    print(f"  eventID: {doc.get('eventID')}")
+    print(f"  chunkType: {doc.get('chunkType')}")
+    print(f"  content: {content}")
+    print(f"  embedding dims: {len(emb)}")
+    if emb:
+        print(f"  first 5 values: {emb[:5]}")
+
+client.close()
+</file>
+
+<file path="user_handle_agent/fix_embeddings.py">
+"""
+Re-embed all documents in eventContext with correct 384-dim vectors
+from all-MiniLM-L6-v2, then create the Atlas Vector Search index.
+"""
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+project_root = Path(__file__).resolve().parent.parent.parent
+load_dotenv(dotenv_path=project_root / ".env")
+
+from pymongo import MongoClient
+from sentence_transformers import SentenceTransformer
+
+mongo_uri = os.getenv("MONGO_URI")
+db_name = os.getenv("MONGO_DB_NAME", "").strip("'\"")
+collection_name = os.getenv("EVENT_CONTEXT_COLLECTION", "eventContext").strip("'\"")
+
+print("Loading SentenceTransformer model...", flush=True)
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+client = MongoClient(mongo_uri)
+coll = client[db_name][collection_name]
+
+# Step 1: Re-embed all documents
+print("\n=== Re-embedding documents ===", flush=True)
+docs = list(coll.find())
+for i, doc in enumerate(docs):
+    content = doc.get("content", "")
+    if not content:
+        print(f"  Doc {i+1}: SKIP (no content)", flush=True)
+        continue
+    
+    embedding = model.encode(content).tolist()
+    coll.update_one(
+        {"_id": doc["_id"]},
+        {"$set": {"embedding": embedding}}
+    )
+    print(f"  Doc {i+1}: re-embedded ({len(embedding)} dims) | {content[:80]}...", flush=True)
+
+# Verify
+print("\n=== Verification ===", flush=True)
+sample = coll.find_one()
+emb = sample.get("embedding", [])
+print(f"  Sample embedding dims: {len(emb)}")
+
+# Step 2: Create Atlas Vector Search index
+print("\n=== Creating Atlas Vector Search Index ===", flush=True)
+index_definition = {
+    "fields": [
+        {
+            "type": "vector",
+            "path": "embedding",
+            "numDimensions": 384,
+            "similarity": "cosine"
+        },
+        {
+            "type": "filter",
+            "path": "eventID"
+        }
+    ]
+}
+
+try:
+    # Check existing indexes first
+    existing = list(coll.list_search_indexes())
+    existing_names = [idx.get("name") for idx in existing]
+    print(f"  Existing search indexes: {existing_names}", flush=True)
+    
+    if "vector_index" in existing_names:
+        print("  'vector_index' already exists — dropping and recreating...", flush=True)
+        coll.drop_search_index("vector_index")
+        import time
+        time.sleep(5)  # Wait for drop to propagate
+    
+    coll.create_search_index(
+        model={
+            "name": "vector_index",
+            "type": "vectorSearch",
+            "definition": index_definition
+        }
+    )
+    print("  ✅ Atlas Vector Search index 'vector_index' created!", flush=True)
+    print("  ⏳ Note: Index may take 1-2 minutes to become active on Atlas.", flush=True)
+except Exception as e:
+    print(f"  ❌ Could not create search index: {e}", flush=True)
+    print("  You may need to create it manually in the Atlas UI.", flush=True)
+
+client.close()
+print("\n[DONE]")
+</file>
+
+<file path="user_handle_agent/README.md">
+## MS Schemantic kernal
+- In Microsoft's Semantic Kernel, the Kernel is the central orchestrator and dependency injection container for an AI application.
+
+- You can think of it as the equivalent of the ApplicationContext in Spring Boot or the app object in Flask, but purpose-built for AI workflows.
+
+- Its primary responsibilities are:
+
+    - ervice Management: It acts as a registry for AI models (e.g., OpenAI, Azure OpenAI, local models) and handles the connection configurations and API keys.
+
+    - Plugin/Tool Registry: It stores and manages "plugins" (native Python/C# functions or semantic prompts), acting as the bridge that allows the LLM to discover and execute external code.
+
+    - Execution Pipeline: It coordinates the flow of data. When a prompt is executed, the Kernel routes it to the correct AI service, manages the state of variables, and handles any intermediate tool executions.
+
+- How it applies to your code
+- In the script you provided, the line kernel = agent_manager.get_kernel() retrieves a pre-configured instance of this orchestrator. Since you bypassed tool-calling, the Kernel is used strictly as a service locator to fetch the OpenAIChatCompletion service and pass your augmented prompt to the OpenAI API.
+</file>
+
+<file path="user_handle_agent/requirements.txt">
+Flask
+grpcio 
+grpcio-tools
+asyncio
+gunicorn
+python-dotenv
+semantic-kernel
+langgraph 
+langchain-core 
+langchain-groq
+openai
+celery
+sentence-transformers
+pymongo
+redis
+</file>
+
+<file path="user_handle_agent/run.py">
+import asyncio
+import os
+import sys
+from pathlib import Path
+
+print("Initializing GRPC Server... Loading heavy AI dependencies (PyTorch). This can take a few minutes on external drives. Please wait...", flush=True)
+
+from app.routes.mainAgentAccess import serve
+from dotenv import load_dotenv
+
+#only the GRPC server (not a flask server)
+if __name__ == "__main__":
+    # The .env lives in the project root (mvp/), two levels up from this file
+    project_root = Path(__file__).resolve().parent.parent.parent
+    env_path = project_root / ".env"
+    load_dotenv(dotenv_path=env_path)
+    
+    # Debug: confirm critical vars loaded
+    print(f"[ENV] GROQ_BASE = {os.getenv('GROQ_BASE', 'NOT SET')}", flush=True)
+    print(f"[ENV] MONGO_URI = {'SET' if os.getenv('MONGO_URI') else 'NOT SET'}", flush=True)
+    print(f"[ENV] MONGO_DB_NAME = {os.getenv('MONGO_DB_NAME', 'NOT SET')}", flush=True)
+    print(f"[ENV] EVENT_CONTEXT_COLLECTION = {os.getenv('EVENT_CONTEXT_COLLECTION', 'NOT SET')}", flush=True)
+    
+    asyncio.run(serve())
+</file>
+
+<file path="user_handle_agent/test_main_agent.py">
+import os
+import asyncio
+from dotenv import load_dotenv
+load_dotenv()
+from app.agents.core.mainAgent import MainAgent
+
+async def test():
+    m = MainAgent()
+    agent = m.get_agent("123")
+    print(agent)
+
+asyncio.run(test())
+</file>
+
+<file path="user_handle_agent/test_sk.py">
+from semantic_kernel.agents import ChatCompletionAgent
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatPromptExecutionSettings
+from semantic_kernel.connectors.ai.function_choice_behavior import FunctionChoiceBehavior
+from semantic_kernel.functions import KernelArguments, KernelPlugin, kernel_function
+
+class MockPlugin:
+    @kernel_function
+    def do_something(self) -> str:
+        return "mock"
+
+settings = OpenAIChatPromptExecutionSettings()
+settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
+
+plugin = KernelPlugin.from_object(plugin_instance=MockPlugin(), plugin_name="MockPlugin")
+
+agent = ChatCompletionAgent(
+    service=None,
+    name="Test",
+    instructions="test",
+    plugins=[plugin],
+    arguments=KernelArguments(settings={"default": settings})
+)
+
+import asyncio
+from semantic_kernel.contents import ChatHistory
+
+async def run():
+    try:
+        history = ChatHistory()
+        async for m in agent.invoke(history=history):
+            print(m)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+
+asyncio.run(run())
+</file>
+
+</files>

@@ -1,22 +1,23 @@
-import os
-import json
-import uuid
-import datetime
 import asyncio
-import redis
+import datetime
+import json
+import os
 import threading
-from flask import Blueprint, jsonify, request, session, Response, stream_with_context
-from app.orchestrator.saga.engine import engine
+import uuid
+
+import grpc
+import jwt
+import redis
+from flask import Blueprint, Response, jsonify, request, session, stream_with_context
+from openai import AsyncOpenAI
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
-from openai import AsyncOpenAI
-import grpc
-from grpc_servers.user_handle_agent.app.proto import agent_pb2
-from grpc_servers.user_handle_agent.app.proto import agent_pb2_grpc
-from app.models.projects import Projects
-import jwt
+
 from app.config import getRedisClient
-from app.decorators.get_temp_participantID import require_token, SECRET_KEY
+from app.decorators.get_temp_participantID import SECRET_KEY, require_token
+from app.models.projects import Projects
+from app.orchestrator.saga.engine import engine
+from grpc_servers.user_handle_agent.app.proto import agent_pb2, agent_pb2_grpc
 
 ai_routes_bp = Blueprint('ai_routes', __name__)
 redis_client = redis.Redis(
@@ -27,23 +28,23 @@ redis_client = redis.Redis(
         )
 def background_task(tempUserID: str, stop_event: threading.Event):
     channel_name = os.getenv('PARTICIPANT_CHANNEL')
-    
+
     # 2. Loop only while the event is NOT set
     while not stop_event.is_set():
-        # Use stop_event.wait() instead of time.sleep(). 
+        # Use stop_event.wait() instead of time.sleep().
         # It acts like sleep, but can be interrupted instantly if the event is triggered.
         is_stopped = stop_event.wait(20.0)
-        
+
         if is_stopped:
             break # Exit the loop immediately if the user disconnects
-            
+
         payload = {
             "type": "ping",
             "user": tempUserID
         }
         json_payload = json.dumps(payload)
         redis_client.publish(channel_name, json_payload)
-        
+
     print(f"[Thread] Background ping task for {tempUserID} safely terminated.")
 
 @ai_routes_bp.route('/get-temp-ID', methods=['GET'])
@@ -55,6 +56,7 @@ def get_temp_id():
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=2)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+        breakpoint()
         return jsonify({'token': token})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -65,55 +67,60 @@ def listen_notifications_participant():
     meeting_url = request.args.get('meetingURL') or request.args.get('meeting_url')
     if not meeting_url:
         return jsonify({"error": "meetingURL parameter is required"}), 400
-        
+
     project = Projects.objects(meetingUrl=meeting_url).first()
     if not project:
         project = Projects.objects(meetingUrl__contains=meeting_url).first()
-        
+
     if not project:
         return jsonify({"error": "No matching event found for the provided meeting info."}), 404
-        
+
     eventID = str(project.id)
     user_id = getattr(request, 'temp_user_id', None)
-    channel = os.getenv('PARTICIPANT_CHANNEL')
+    channel = os.getenv('PARTICIPANT_CHANNEL', 'default_participant_channel')
 
     def event_stream():
-        stop_ping_thread = threading.Event()
-        ping_thread = threading.Thread(
-            target=background_task, 
-            args=(user_id, stop_ping_thread),
-            daemon=True
-        )
-        ping_thread.start()
-
         redis_client = getRedisClient()
         pubsub = redis_client.pubsub(ignore_subscribe_messages=True)
         pubsub.subscribe(channel)
-        print(f"[SSE] User (participant) '{user_id}' connected to notification stream on channel '{channel}'")
+        print(f"[SSE] User (participant) '{user_id}' connected to stream on channel '{channel}'")
 
         try:
-            for message in pubsub.listen():
+            while True:
+                # Poll Redis with a 15-second timeout
+                message = pubsub.get_message(ignore_subscribe_messages=True, timeout=15.0)
+
+                if message is None:
+                    # No new messages in 15s — yield heartbeat to prevent Cloudflare/Proxy timeout
+                    yield ": keepalive\n\n"
+                    continue
+
                 try:
                     raw = message['data']
                     if isinstance(raw, bytes):
                         raw = raw.decode('utf-8')
 
                     payload = json.loads(raw)
-                    if payload.get("type") == "ping":
-                        yield "ping"
-                    else:
-                        if payload.get('eventID') != eventID:
-                            continue
-                        
-                        target_user = payload.get('userID')
-                        if target_user and target_user != user_id:
-                            continue
 
-                        event_data = json.dumps(payload)
-                        yield f"data: {event_data}\n\n"
+                    # Ignore external ping messages if any exist
+                    if payload.get("type") == "ping":
+                        yield ": keepalive\n\n"
+                        continue
+
+                    # Filter by eventID
+                    if payload.get('eventID') != eventID:
+                        continue
+
+                    # Filter by target user
+                    target_user = payload.get('userID')
+                    if target_user and target_user != user_id:
+                        continue
+
+                    event_data = json.dumps(payload)
+                    yield f"data: {event_data}\n\n"
 
                 except (json.JSONDecodeError, Exception) as parse_err:
-                    print(f"[SSE] Error parsing notification message: {parse_err}")
+                    print(f"[SSE] Error parsing message: {parse_err}")
                     continue
 
         except GeneratorExit:
@@ -127,8 +134,9 @@ def listen_notifications_participant():
         mimetype='text/event-stream',
         headers={
             'Cache-Control': 'no-cache',
-            'X-Accel-Buffering': 'no', 
+            'X-Accel-Buffering': 'no',
             'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*'  # Prevents CORS errors on reconnects
         }
     )
 
@@ -138,9 +146,9 @@ def listen_notifications_participant():
 @require_token
 def test_agent():
     try:
-        address = os.getenv('USER_AGENT_GRPC', 'localhost:50051')                
+        address = os.getenv('USER_AGENT_GRPC', 'localhost:50051')
         data = request.json or {}
-        
+
         query = data.get('query') or data.get('prompt') or ''
         user_id = getattr(request, 'temp_user_id', None)
         if not query or not user_id:
@@ -148,21 +156,21 @@ def test_agent():
 
         # Try to resolve eventID (from eventID direct, meetingCode, or meetingURL)
         eventID = data.get('eventID') or data.get('event_id')
-        
+
         if not eventID:
             meeting_code = data.get('meetingCode') or data.get('meeting_code')
             meeting_url = data.get('meetingURL') or data.get('meeting_url')
-            
+
             project = None
             if meeting_code:
                 # Retrieve project by meeting code substring (e.g. 'abc-defg-hij')
                 project = Projects.objects(meetingUrl__contains=meeting_code).first()
             if not project and meeting_url:
                 project = Projects.objects(meetingUrl=meeting_url).first()
-                
+
             if not project:
                 return jsonify({"error": "No matching event found for the provided meeting info."}), 404
-            
+
             eventID = str(project.id)
         else:
             eventID = str(eventID)
@@ -175,7 +183,7 @@ def test_agent():
                 query=query
             )
             response = stub.RunAgent(grpc_request)
-            
+
             if response.error:
                 return jsonify({"error": response.error, "is_complete": False}), 500
 
@@ -202,7 +210,7 @@ def test_agent():
 #         )
 #         service = OpenAIChatCompletion(
 #             service_id="groq",
-#             ai_model_id="llama-3.1-8b-instant",   
+#             ai_model_id="llama-3.1-8b-instant",
 #             async_client=client
 #         )
 
@@ -210,7 +218,7 @@ def test_agent():
 #         result = asyncio.run(kernel.invoke_prompt("Summarise the latest news in 3 bullet points"))
 #         return str(result)
 #     except Exception as e:
-#         return str(e)    
+#         return str(e)
 
 
 @ai_routes_bp.route('/generate-event', methods=['POST'])

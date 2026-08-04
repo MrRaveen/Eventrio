@@ -1,13 +1,14 @@
-import os
 import json
+import os
 import traceback
+
 import redis
-from semantic_kernel.contents import ChatHistory
+from app.agents.core.mainAgent import AGENT_INSTRUCTIONS, MainAgent
 from semantic_kernel.connectors.ai.open_ai import (
     OpenAIChatCompletion,
     OpenAIChatPromptExecutionSettings,
 )
-from app.agents.core.mainAgent import MainAgent, AGENT_INSTRUCTIONS
+from semantic_kernel.contents import ChatHistory
 
 
 def _get_redis_client():
@@ -62,8 +63,8 @@ async def user_questions_task(job_id: str, eventID: str, query: str, tempUserID:
             type=OpenAIChatCompletion
         )
 
-        # This is the execution trigger. The OpenAIChatCompletion service takes the standardized, 
-        # framework-agnostic objects (history and settings), 
+        # This is the execution trigger. The OpenAIChatCompletion service takes the standardized,
+        # framework-agnostic objects (history and settings),
         # translates them into the specific JSON payload required by OpenAI's
         # REST API, makes the asynchronous network call, and parses the response back into a Semantic Kernel object.
         result = await chat_service.get_chat_message_contents(
@@ -72,7 +73,7 @@ async def user_questions_task(job_id: str, eventID: str, query: str, tempUserID:
         )
 
         response_text = result[-1].content if result else ""
-        channel_name = os.getenv('PARTICIPANT_CHANNEL')   
+        channel_name = os.getenv('PARTICIPANT_CHANNEL')
 
         payload = {
             "type":"message",
@@ -85,6 +86,7 @@ async def user_questions_task(job_id: str, eventID: str, query: str, tempUserID:
 
         json_payload = json.dumps(payload)
         subscribers_count = redis_client.publish(channel_name, json_payload)
+        breakpoint()
         print(f"[user_questions_task] Published response for job={job_id} to {subscribers_count} subscriber(s).", flush=True)
 
     except Exception as e:

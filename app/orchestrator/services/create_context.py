@@ -1,12 +1,14 @@
+import json
 import os
 import time
-import json
-from typing import List, Any
-from pydantic import BaseModel
+from typing import Any, List
+
 from celery import shared_task
-from app.config import getRedisClient
-from app.models.eventContext import EventContext, ChunkType
+from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+
+from app.config import getRedisClient
+from app.models.eventContext import ChunkType, EventContext
 from app.orchestrator.channel_output import channel_output
 
 model = None
@@ -35,7 +37,7 @@ class context_service:
             channel_name = os.getenv('CHANNEL_NAME_ORCHESTRATOR')
 
             event_id = reqData.event_id
-            
+
             # Process Questions and Answers
             qa_texts = []
             for qa in reqData.allQuestionsAnswers:
@@ -92,7 +94,7 @@ class context_service:
                     "message": "Context created successfully"
                 }
             )
-            
+
             payload = {
                 "status": "SUCCESS",
                 "function_name": "create_context",

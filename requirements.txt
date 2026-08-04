@@ -38,14 +38,16 @@ mcp
 dnspython
 instructor
 
-langgraph 
-langchain-core 
+langgraph
+langchain-core
 langchain-groq
 celery
 flask_limiter
 Flask-APScheduler
 semantic-kernel
-grpcio 
+grpcio
 grpcio-tools
 Flask-Cors
 PyJWT
+sentence-transformers
+debugpy
